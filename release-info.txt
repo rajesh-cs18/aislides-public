@@ -1,2 +1,2 @@
-Published lectures: all
-Built at: 2026-04-18T05:04:18Z
+Published lectures: 1,2,3
+Built at: 2026-04-18T05:10:10Z
