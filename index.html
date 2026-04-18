@@ -298,6 +298,8 @@
       Tip: after GitHub Pages is enabled on the main branch root, this file becomes your public course homepage.
       <br />
       <strong>Published lectures:</strong> <span id="publishedInfo">local preview (all lectures)</span>
+      <br />
+      <strong>Page visits:</strong> <span id="visitCount">loading...</span>
     </div>
   </main>
 
@@ -357,7 +359,28 @@
       });
     }
 
+    async function updateVisitCount() {
+      const el = document.getElementById("visitCount");
+      if (!el) return;
+
+      try {
+        // Free hosted counter service for static sites.
+        const ns = "rajesh-cs18-aislides-public";
+        const key = "homepage";
+        const url = `https://api.countapi.xyz/hit/${ns}/${key}`;
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error("counter request failed");
+        const data = await res.json();
+        if (typeof data.value !== "number") throw new Error("invalid counter payload");
+
+        el.textContent = data.value.toLocaleString();
+      } catch (err) {
+        el.textContent = "unavailable";
+      }
+    }
+
     applyLectureLocks();
+    updateVisitCount();
   </script>
 </body>
 </html>
