@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Search Visualization: BFS, DFS, UCS</title>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --ink: #1f2430;
+      --muted: #5c657a;
+      --accent: #0f766e;
+      --accent-2: #ea580c;
+      --frontier: #2563eb;
+      --expanded: #16a34a;
+      --goal: #dc2626;
+      --edge: #9aa3b5;
+      --shadow: 0 10px 25px rgba(31, 36, 48, 0.08);
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 8%, #e8efff 0 25%, transparent 40%),
+        radial-gradient(circle at 90% 12%, #e7fbf7 0 20%, transparent 35%),
+        var(--bg);
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .layout {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.3rem;
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.35;
+    }
+
+    .control {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+
+    select,
+    input[type="range"],
+    button {
+      width: 100%;
+    }
+
+    select,
+    button {
+      border: 1px solid #d5dbe7;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 0.95rem;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    button {
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: #b9c5df;
+    }
+
+    .primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .metrics {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .metric {
+      border: 1px solid #e2e7f0;
+      border-radius: 10px;
+      padding: 10px;
+      background: #fbfcff;
+    }
+
+    .metric strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .metric .value {
+      font-size: 0.98rem;
+      line-height: 1.3;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      min-height: 620px;
+      overflow: hidden;
+    }
+
+    svg {
+      width: 100%;
+      height: 620px;
+      display: block;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+      border: 1px solid #e4e9f3;
+    }
+
+    .legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .edge {
+      stroke: var(--edge);
+      stroke-width: 2.2;
+    }
+
+    .edge.path {
+      stroke: #0f766e;
+      stroke-width: 4;
+    }
+
+    .node circle {
+      fill: #ffffff;
+      stroke: #8893a9;
+      stroke-width: 2.5;
+      transition: 0.25s ease;
+    }
+
+    .node.start circle {
+      stroke: #0ea5e9;
+      stroke-width: 3.2;
+    }
+
+    .node.goal circle {
+      stroke: var(--goal);
+      stroke-width: 3.2;
+    }
+
+    .node.frontier circle {
+      fill: #dbeafe;
+      stroke: var(--frontier);
+    }
+
+    .node.expanded circle {
+      fill: #dcfce7;
+      stroke: var(--expanded);
+    }
+
+    .node.current circle {
+      fill: #ffedd5;
+      stroke: var(--accent-2);
+      stroke-width: 4;
+    }
+
+    .node text {
+      font-size: 14px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      fill: #1f2430;
+      user-select: none;
+    }
+
+    .edge-label {
+      font-size: 12px;
+      fill: #4e5972;
+      font-weight: 600;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      user-select: none;
+    }
+
+    .hint {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .canvas-wrap,
+      svg {
+        min-height: 500px;
+        height: 500px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <section class="panel">
+      <h1>BFS, DFS, UCS Visualizer</h1>
+      <p class="subtitle">
+        Start node: <strong>A</strong>, Goal node: <strong>G</strong>. Use step controls to show how the frontier evolves.
+      </p>
+
+      <div class="control">
+        <label for="algorithm">Algorithm</label>
+        <select id="algorithm">
+          <option value="BFS">Breadth-First Search (BFS)</option>
+          <option value="DFS">Depth-First Search (DFS)</option>
+          <option value="UCS">Uniform-Cost Search (UCS)</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="stepRange">Step</label>
+        <input id="stepRange" type="range" min="0" max="0" value="0" />
+      </div>
+
+      <div class="button-row">
+        <button id="prevBtn">Prev</button>
+        <button id="nextBtn">Next</button>
+        <button id="resetBtn">Reset</button>
+      </div>
+
+      <button id="playBtn" class="primary">Play</button>
+
+      <div class="metrics">
+        <div class="metric">
+          <strong>Expanded Order</strong>
+          <div id="expandedOrder" class="value">-</div>
+        </div>
+        <div class="metric">
+          <strong>Frontier (Current)</strong>
+          <div id="frontierNow" class="value">-</div>
+        </div>
+        <div class="metric">
+          <strong>Solution Path</strong>
+          <div id="pathNow" class="value">-</div>
+        </div>
+        <div class="metric">
+          <strong>Path Cost</strong>
+          <div id="costNow" class="value">-</div>
+        </div>
+      </div>
+
+      <p class="hint">
+        Notes: BFS is shortest by depth, DFS dives deep quickly, and UCS expands by lowest cumulative path cost g(n).
+      </p>
+    </section>
+
+    <section class="panel canvas-wrap">
+      <svg id="graph" viewBox="0 0 860 620" aria-label="Search graph visualization"></svg>
+      <div class="legend">
+        <span><span class="dot" style="background:#0ea5e9"></span>Start</span>
+        <span><span class="dot" style="background:#dc2626"></span>Goal border</span>
+        <span><span class="dot" style="background:#dbeafe"></span>Frontier</span>
+        <span><span class="dot" style="background:#dcfce7"></span>Expanded</span>
+        <span><span class="dot" style="background:#ffedd5"></span>Current step</span>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const startNode = "A";
+    const goalNode = "G";
+
+    const nodes = {
+      A: { x: 110, y: 300 },
+      B: { x: 270, y: 170 },
+      C: { x: 270, y: 430 },
+      D: { x: 470, y: 105 },
+      E: { x: 470, y: 300 },
+      F: { x: 470, y: 500 },
+      G: { x: 700, y: 300 }
+    };
+
+    const edges = [
+      ["A", "B", 2],
+      ["A", "C", 1],
+      ["B", "D", 5],
+      ["B", "E", 2],
+      ["C", "E", 4],
+      ["C", "F", 7],
+      ["D", "G", 1],
+      ["E", "G", 3],
+      ["F", "G", 1]
+    ];
+
+    function buildAdjacency() {
+      const adj = {};
+      Object.keys(nodes).forEach((n) => {
+        adj[n] = [];
+      });
+      edges.forEach(([u, v, w]) => {
+        adj[u].push({ to: v, w });
+        adj[v].push({ to: u, w });
+      });
+      Object.values(adj).forEach((list) => list.sort((a, b) => a.to.localeCompare(b.to)));
+      return adj;
+    }
+
+    const adjacency = buildAdjacency();
+
+    function pathFromParent(parent, target) {
+      const path = [];
+      let cur = target;
+      while (cur) {
+        path.push(cur);
+        cur = parent[cur] || null;
+      }
+      return path.reverse();
+    }
+
+    function pathCost(path) {
+      if (!path || path.length < 2) return 0;
+      let cost = 0;
+      for (let i = 0; i < path.length - 1; i += 1) {
+        const u = path[i];
+        const v = path[i + 1];
+        const edge = adjacency[u].find((e) => e.to === v);
+        cost += edge ? edge.w : 0;
+      }
+      return cost;
+    }
+
+    function runBFS() {
+      const frontier = [startNode];
+      const reached = new Set([startNode]);
+      const parent = { [startNode]: null };
+      const steps = [];
+
+      while (frontier.length) {
+        const current = frontier.shift();
+        const expandedOrder = steps.map((s) => s.expanded).concat([current]);
+
+        if (current !== goalNode) {
+          adjacency[current].forEach((nbr) => {
+            if (!reached.has(nbr.to)) {
+              reached.add(nbr.to);
+              parent[nbr.to] = current;
+              frontier.push(nbr.to);
+            }
+          });
+        }
+
+        const isGoal = current === goalNode;
+        const foundPath = isGoal ? pathFromParent(parent, goalNode) : null;
+
+        steps.push({
+          expanded: current,
+          expandedOrder,
+          frontier: [...frontier],
+          path: foundPath,
+          cost: foundPath ? pathCost(foundPath) : null
+        });
+
+        if (isGoal) break;
+      }
+
+      return { steps, finalPath: steps[steps.length - 1]?.path || null };
+    }
+
+    function runDFS() {
+      const stack = [startNode];
+      const reached = new Set([startNode]);
+      const parent = { [startNode]: null };
+      const steps = [];
+
+      while (stack.length) {
+        const current = stack.pop();
+        const expandedOrder = steps.map((s) => s.expanded).concat([current]);
+
+        if (current !== goalNode) {
+          const neighbors = [...adjacency[current]].reverse();
+          neighbors.forEach((nbr) => {
+            if (!reached.has(nbr.to)) {
+              reached.add(nbr.to);
+              parent[nbr.to] = current;
+              stack.push(nbr.to);
+            }
+          });
+        }
+
+        const isGoal = current === goalNode;
+        const foundPath = isGoal ? pathFromParent(parent, goalNode) : null;
+
+        steps.push({
+          expanded: current,
+          expandedOrder,
+          frontier: [...stack].reverse(),
+          path: foundPath,
+          cost: foundPath ? pathCost(foundPath) : null
+        });
+
+        if (isGoal) break;
+      }
+
+      return { steps, finalPath: steps[steps.length - 1]?.path || null };
+    }
+
+    function sortPriority(frontier) {
+      frontier.sort((a, b) => (a.g - b.g) || a.node.localeCompare(b.node));
+    }
+
+    function runUCS() {
+      const frontier = [{ node: startNode, g: 0 }];
+      const best = { [startNode]: 0 };
+      const parent = { [startNode]: null };
+      const expanded = new Set();
+      const steps = [];
+
+      while (frontier.length) {
+        sortPriority(frontier);
+        const currentEntry = frontier.shift();
+        const current = currentEntry.node;
+
+        if (expanded.has(current)) continue;
+        expanded.add(current);
+
+        const expandedOrder = steps.map((s) => s.expanded).concat([current]);
+
+        if (current !== goalNode) {
+          adjacency[current].forEach((nbr) => {
+            const nextCost = best[current] + nbr.w;
+            if (best[nbr.to] === undefined || nextCost < best[nbr.to]) {
+              best[nbr.to] = nextCost;
+              parent[nbr.to] = current;
+              frontier.push({ node: nbr.to, g: nextCost });
+            }
+          });
+        }
+
+        sortPriority(frontier);
+
+        const isGoal = current === goalNode;
+        const foundPath = isGoal ? pathFromParent(parent, goalNode) : null;
+
+        steps.push({
+          expanded: current,
+          expandedOrder,
+          frontier: frontier.map((f) => `${f.node} (${f.g})`),
+          frontierNodes: frontier.map((f) => f.node),
+          path: foundPath,
+          cost: foundPath ? pathCost(foundPath) : null
+        });
+
+        if (isGoal) break;
+      }
+
+      return { steps, finalPath: steps[steps.length - 1]?.path || null };
+    }
+
+    const runs = {
+      BFS: runBFS(),
+      DFS: runDFS(),
+      UCS: runUCS()
+    };
+
+    const svg = document.getElementById("graph");
+    const algorithmSelect = document.getElementById("algorithm");
+    const stepRange = document.getElementById("stepRange");
+    const expandedOrderEl = document.getElementById("expandedOrder");
+    const frontierNowEl = document.getElementById("frontierNow");
+    const pathNowEl = document.getElementById("pathNow");
+    const costNowEl = document.getElementById("costNow");
+
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const playBtn = document.getElementById("playBtn");
+
+    let currentAlgo = "BFS";
+    let currentStep = 0;
+    let timer = null;
+
+    function edgeKey(u, v) {
+      return [u, v].sort().join("-");
+    }
+
+    function createGraphBase() {
+      svg.innerHTML = "";
+
+      const edgeLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      edgeLayer.setAttribute("id", "edgeLayer");
+      svg.appendChild(edgeLayer);
+
+      const labelLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      labelLayer.setAttribute("id", "edgeLabelLayer");
+      svg.appendChild(labelLayer);
+
+      edges.forEach(([u, v, w]) => {
+        const p1 = nodes[u];
+        const p2 = nodes[v];
+
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", p1.x);
+        line.setAttribute("y1", p1.y);
+        line.setAttribute("x2", p2.x);
+        line.setAttribute("y2", p2.y);
+        line.setAttribute("class", "edge");
+        line.dataset.edge = edgeKey(u, v);
+        edgeLayer.appendChild(line);
+
+        const mx = (p1.x + p2.x) / 2;
+        const my = (p1.y + p2.y) / 2;
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("x", mx);
+        txt.setAttribute("y", my - 8);
+        txt.setAttribute("class", "edge-label");
+        txt.textContent = w;
+        labelLayer.appendChild(txt);
+      });
+
+      const nodeLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      nodeLayer.setAttribute("id", "nodeLayer");
+      svg.appendChild(nodeLayer);
+
+      Object.keys(nodes).forEach((id) => {
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("class", "node");
+        g.dataset.node = id;
+
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.setAttribute("cx", nodes[id].x);
+        c.setAttribute("cy", nodes[id].y);
+        c.setAttribute("r", 29);
+
+        const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t.setAttribute("x", nodes[id].x);
+        t.setAttribute("y", nodes[id].y + 1);
+        t.textContent = id;
+
+        g.appendChild(c);
+        g.appendChild(t);
+        nodeLayer.appendChild(g);
+      });
+    }
+
+    function highlightPath(path) {
+      const edgeEls = svg.querySelectorAll(".edge");
+      edgeEls.forEach((line) => line.classList.remove("path"));
+      if (!path || path.length < 2) return;
+
+      for (let i = 0; i < path.length - 1; i += 1) {
+        const k = edgeKey(path[i], path[i + 1]);
+        const edge = svg.querySelector(`.edge[data-edge='${k}']`);
+        if (edge) edge.classList.add("path");
+      }
+    }
+
+    function getFrontierNodes(step) {
+      if (!step) return [];
+      if (Array.isArray(step.frontierNodes)) return step.frontierNodes;
+      if (!Array.isArray(step.frontier)) return [];
+      return step.frontier;
+    }
+
+    function render() {
+      const steps = runs[currentAlgo].steps;
+      const step = steps[currentStep];
+
+      stepRange.max = Math.max(0, steps.length - 1);
+      stepRange.value = currentStep;
+
+      const expandedSet = new Set(step.expandedOrder.slice(0, -1));
+      const currentNode = step.expanded;
+      const frontierSet = new Set(getFrontierNodes(step));
+
+      svg.querySelectorAll(".node").forEach((el) => {
+        const id = el.dataset.node;
+        el.classList.remove("start", "goal", "frontier", "expanded", "current");
+
+        if (id === startNode) el.classList.add("start");
+        if (id === goalNode) el.classList.add("goal");
+        if (expandedSet.has(id)) el.classList.add("expanded");
+        if (frontierSet.has(id)) el.classList.add("frontier");
+        if (id === currentNode) el.classList.add("current");
+      });
+
+      highlightPath(step.path);
+
+      expandedOrderEl.textContent = step.expandedOrder.join(" -> ");
+      frontierNowEl.textContent = (step.frontier && step.frontier.length)
+        ? step.frontier.join(", ")
+        : "(empty)";
+      pathNowEl.textContent = step.path ? step.path.join(" -> ") : "Not reached yet";
+      costNowEl.textContent = step.cost !== null ? String(step.cost) : "-";
+
+      playBtn.textContent = timer ? "Pause" : "Play";
+    }
+
+    function stopPlayback() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+      playBtn.textContent = "Play";
+    }
+
+    function setAlgorithm(algo) {
+      currentAlgo = algo;
+      currentStep = 0;
+      stopPlayback();
+      render();
+    }
+
+    algorithmSelect.addEventListener("change", (e) => {
+      setAlgorithm(e.target.value);
+    });
+
+    stepRange.addEventListener("input", (e) => {
+      currentStep = Number(e.target.value);
+      stopPlayback();
+      render();
+    });
+
+    prevBtn.addEventListener("click", () => {
+      currentStep = Math.max(0, currentStep - 1);
+      render();
+    });
+
+    nextBtn.addEventListener("click", () => {
+      const max = runs[currentAlgo].steps.length - 1;
+      currentStep = Math.min(max, currentStep + 1);
+      render();
+    });
+
+    resetBtn.addEventListener("click", () => {
+      currentStep = 0;
+      stopPlayback();
+      render();
+    });
+
+    playBtn.addEventListener("click", () => {
+      if (timer) {
+        stopPlayback();
+        return;
+      }
+
+      timer = setInterval(() => {
+        const max = runs[currentAlgo].steps.length - 1;
+        if (currentStep >= max) {
+          stopPlayback();
+          return;
+        }
+        currentStep += 1;
+        render();
+      }, 950);
+
+      render();
+    });
+
+    createGraphBase();
+    render();
+  </script>
+</body>
+</html>

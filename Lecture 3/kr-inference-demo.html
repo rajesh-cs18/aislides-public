@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KR and Inference Demo</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --ink: #1b2432;
+      --muted: #5e6b82;
+      --line: #d8e0ef;
+      --accent: #0f766e;
+      --accent-2: #0a4f57;
+      --blue: #2563eb;
+      --orange: #ea580c;
+      --green: #16a34a;
+      --danger: #dc2626;
+      --ok: #166534;
+      --shadow: 0 10px 24px rgba(27, 36, 50, 0.09);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 8%, #e7f7f3 0 18%, transparent 30%),
+        radial-gradient(circle at 92% 10%, #e8eeff 0 18%, transparent 30%),
+        var(--bg);
+      padding: 22px;
+    }
+
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid #e5ebf6;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    h1 { margin: 0; font-size: 1.3rem; }
+    h2 { margin: 0 0 10px; font-size: 1.04rem; }
+
+    .sub {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .mono {
+      font-family: Menlo, Monaco, "Courier New", monospace;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .tab-btn {
+      border: 1px solid #cdd7ea;
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #334155;
+      transition: 140ms ease;
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.14);
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .mini {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fbfdff;
+      padding: 12px;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    label {
+      font-size: 0.88rem;
+      color: #334155;
+      font-weight: 600;
+    }
+
+    select,
+    input[type="text"] {
+      border: 1px solid #cdd7ea;
+      border-radius: 9px;
+      padding: 7px 9px;
+      font-size: 0.9rem;
+      min-width: 130px;
+      color: #0f172a;
+      background: #fff;
+    }
+
+    button {
+      border: 1px solid #cdd7ea;
+      border-radius: 10px;
+      background: #fff;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    button.primary:hover { background: var(--accent-2); }
+
+    .table-wrap {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    th, td {
+      border-bottom: 1px solid #edf2fb;
+      padding: 8px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #f7faff;
+      color: #334155;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .list {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      padding: 8px;
+      max-height: 220px;
+      overflow: auto;
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .result {
+      margin-top: 8px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #f8fbff;
+      font-size: 0.9rem;
+      min-height: 44px;
+      line-height: 1.45;
+    }
+
+    .ok { color: var(--ok); font-weight: 700; }
+    .bad { color: var(--danger); font-weight: 700; }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-right: 6px;
+      margin-bottom: 4px;
+    }
+
+    .b-blue { background: #dbeafe; color: #1d4ed8; }
+    .b-green { background: #dcfce7; color: #166534; }
+    .b-orange { background: #ffedd5; color: #9a3412; }
+
+    @media (max-width: 980px) {
+      .tabs { grid-template-columns: 1fr 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card">
+      <h1>Knowledge Representation Interactive Demo</h1>
+      <p class="sub">Lecture 3 playground: semantics, entailment/validity, CNF-SAT, FOL instantiation, and unification.</p>
+    </section>
+
+    <section class="card">
+      <div class="tabs" role="tablist" aria-label="KR demo tabs">
+        <button class="tab-btn active" data-tab="truth">Truth Tables</button>
+        <button class="tab-btn" data-tab="sat">SAT Playground</button>
+        <button class="tab-btn" data-tab="fol">FOL Instantiation</button>
+        <button class="tab-btn" data-tab="unify">Unification</button>
+      </div>
+
+      <section class="panel active" id="truth">
+        <div class="grid-2">
+          <article class="mini">
+            <h2>Semantics and Validity Checker</h2>
+            <p class="sub">Choose a formula on P and Q, enumerate all models, and classify it as valid, satisfiable, or unsatisfiable.</p>
+            <div class="row">
+              <label for="formulaSelect">Formula</label>
+              <select id="formulaSelect">
+                <option value="imp">P -&gt; Q</option>
+                <option value="and">P and Q</option>
+                <option value="orNot">P or not P</option>
+                <option value="contradiction">P and not P</option>
+              </select>
+              <button class="primary" id="runFormula">Evaluate Models</button>
+            </div>
+            <div class="table-wrap" id="formulaTable"></div>
+            <div class="result" id="formulaResult">Pick a formula and click Evaluate Models.</div>
+          </article>
+
+          <article class="mini">
+            <h2>Entailment Mini-Check</h2>
+            <p class="sub">KB = {R -&gt; W, R}, Query = W. Check whether every KB-true model also makes W true.</p>
+            <div class="row">
+              <button class="primary" id="runEntail">Run Entailment Test</button>
+              <button id="resetEntail">Reset</button>
+            </div>
+            <div class="list mono" id="entailList"></div>
+            <div class="result" id="entailResult">Run to see model-by-model behavior of entailment.</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel" id="sat">
+        <div class="grid-2">
+          <article class="mini">
+            <h2>CNF Clause Evaluation</h2>
+            <p class="sub mono">Formula: (not A or B) and (not B or C) and A</p>
+            <div class="row">
+              <label>A</label>
+              <select id="aVal"><option>T</option><option>F</option></select>
+              <label>B</label>
+              <select id="bVal"><option>T</option><option>F</option></select>
+              <label>C</label>
+              <select id="cVal"><option>T</option><option>F</option></select>
+              <button class="primary" id="evalSat">Evaluate</button>
+            </div>
+            <div class="list mono" id="satBreakdown"></div>
+            <div class="result" id="satResult">Try assignments to see when all clauses become true.</div>
+          </article>
+
+          <article class="mini">
+            <h2>Find One Satisfying Assignment</h2>
+            <p class="sub">Brute-force all 8 assignments and stop at the first one that satisfies the CNF.</p>
+            <div class="row">
+              <button class="primary" id="searchSat">Search SAT</button>
+            </div>
+            <div class="list mono" id="satSearchLog"></div>
+            <div class="result" id="satSearchResult">Click Search SAT to see DPLL-style intuition via enumeration.</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel" id="fol">
+        <div class="grid-2">
+          <article class="mini">
+            <h2>Rule Instantiation</h2>
+            <p class="sub mono">Rule: forall p (HasFlu(p) -&gt; NeedsRest(p))</p>
+            <div class="row">
+              <label><input type="checkbox" id="fluAli" checked /> HasFlu(Ali)</label>
+              <label><input type="checkbox" id="fluRiya" /> HasFlu(Riya)</label>
+              <label><input type="checkbox" id="fluSam" checked /> HasFlu(Sam)</label>
+            </div>
+            <div class="row">
+              <button class="primary" id="inferFOL">Infer Facts</button>
+              <button id="resetFOL">Reset</button>
+            </div>
+            <div class="list mono" id="folFacts"></div>
+            <div class="result" id="folResult">Inference will instantiate the universal rule for each person.</div>
+          </article>
+
+          <article class="mini">
+            <h2>Quantifier Checks</h2>
+            <p class="sub">Evaluate quantifier claims over current facts.</p>
+            <div class="row">
+              <button class="primary" id="checkForAll">Check forall p HasFlu(p)</button>
+              <button class="primary" id="checkExists">Check exists p HasFlu(p)</button>
+            </div>
+            <div class="result" id="quantResult">Run a quantifier check after setting facts.</div>
+            <div class="result">
+              <span class="badge b-blue">forall</span>
+              true only if every domain object satisfies predicate.
+              <br />
+              <span class="badge b-green">exists</span>
+              true if at least one domain object satisfies predicate.
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel" id="unify">
+        <div class="grid-2">
+          <article class="mini">
+            <h2>Unification Visualizer</h2>
+            <p class="sub">Use terms like <span class="mono">Treats(DrSmith,x)</span> and <span class="mono">Treats(DrSmith,Sam)</span>.</p>
+            <div class="row">
+              <label for="term1">Term 1</label>
+              <input id="term1" type="text" value="Treats(DrSmith,x)" />
+            </div>
+            <div class="row">
+              <label for="term2">Term 2</label>
+              <input id="term2" type="text" value="Treats(DrSmith,Sam)" />
+            </div>
+            <div class="row">
+              <button class="primary" id="runUnify">Unify</button>
+              <button id="demoUnify">Load Failure Example</button>
+            </div>
+            <div class="result mono" id="unifyResult">Run to compute substitution theta.</div>
+          </article>
+
+          <article class="mini">
+            <h2>How to Read Result</h2>
+            <div class="list">
+              Variables are lowercase (e.g., <span class="mono">x</span>, <span class="mono">y</span>).
+              <br /><br />
+              Constants and predicate names are treated as symbols.
+              <br /><br />
+              Unification fails when predicate names differ, arity differs, or constants conflict.
+              <br /><br />
+              Example failure:
+              <br />
+              <span class="mono">Treats(DrSmith,Sam)</span>
+              <br />
+              <span class="mono">Treats(DrJones,Sam)</span>
+              <br />
+              Constants <span class="mono">DrSmith</span> and <span class="mono">DrJones</span> conflict.
+            </div>
+          </article>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    const panels = document.querySelectorAll(".panel");
+
+    tabButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const tab = btn.dataset.tab;
+        tabButtons.forEach((b) => b.classList.remove("active"));
+        panels.forEach((p) => p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(tab).classList.add("active");
+      });
+    });
+
+    const formulaSelect = document.getElementById("formulaSelect");
+    const runFormula = document.getElementById("runFormula");
+    const formulaTable = document.getElementById("formulaTable");
+    const formulaResult = document.getElementById("formulaResult");
+
+    function evalFormula(key, p, q) {
+      if (key === "imp") return (!p) || q;
+      if (key === "and") return p && q;
+      if (key === "orNot") return p || (!p);
+      if (key === "contradiction") return p && (!p);
+      return false;
+    }
+
+    function runFormulaModels() {
+      const key = formulaSelect.value;
+      const rows = [];
+      let trueCount = 0;
+
+      [false, true].forEach((p) => {
+        [false, true].forEach((q) => {
+          const val = evalFormula(key, p, q);
+          if (val) trueCount += 1;
+          rows.push({ p, q, val });
+        });
+      });
+
+      formulaTable.innerHTML = `
+        <table>
+          <thead><tr><th>P</th><th>Q</th><th>Formula Value</th></tr></thead>
+          <tbody>
+            ${rows.map((r) => `<tr><td>${r.p ? "T" : "F"}</td><td>${r.q ? "T" : "F"}</td><td>${r.val ? "T" : "F"}</td></tr>`).join("")}
+          </tbody>
+        </table>
+      `;
+
+      if (trueCount === 4) {
+        formulaResult.innerHTML = "Classification: <span class='ok'>Valid (tautology)</span>.";
+      } else if (trueCount === 0) {
+        formulaResult.innerHTML = "Classification: <span class='bad'>Unsatisfiable (contradiction)</span>.";
+      } else {
+        formulaResult.textContent = "Classification: Satisfiable but not valid.";
+      }
+    }
+
+    runFormula.addEventListener("click", runFormulaModels);
+
+    const runEntail = document.getElementById("runEntail");
+    const resetEntail = document.getElementById("resetEntail");
+    const entailList = document.getElementById("entailList");
+    const entailResult = document.getElementById("entailResult");
+
+    function runEntailment() {
+      const rows = [];
+      let entails = true;
+
+      [false, true].forEach((r) => {
+        [false, true].forEach((w) => {
+          const kb = ((!r) || w) && r;
+          const q = w;
+          rows.push(`R=${r ? 1 : 0}, W=${w ? 1 : 0} | KB=${kb ? 1 : 0}, Q=${q ? 1 : 0}`);
+          if (kb && !q) entails = false;
+        });
+      });
+
+      entailList.innerHTML = rows.join("<br>");
+      entailResult.innerHTML = entails
+        ? "Result: <span class='ok'>KB entails W</span>."
+        : "Result: <span class='bad'>KB does not entail W</span>.";
+    }
+
+    runEntail.addEventListener("click", runEntailment);
+    resetEntail.addEventListener("click", () => {
+      entailList.innerHTML = "";
+      entailResult.textContent = "Run to see model-by-model behavior of entailment.";
+    });
+
+    const aVal = document.getElementById("aVal");
+    const bVal = document.getElementById("bVal");
+    const cVal = document.getElementById("cVal");
+    const evalSat = document.getElementById("evalSat");
+    const satBreakdown = document.getElementById("satBreakdown");
+    const satResult = document.getElementById("satResult");
+    const searchSat = document.getElementById("searchSat");
+    const satSearchLog = document.getElementById("satSearchLog");
+    const satSearchResult = document.getElementById("satSearchResult");
+
+    function boolFromSelect(el) {
+      return el.value === "T";
+    }
+
+    function evalCNF(a, b, c) {
+      const c1 = (!a) || b;
+      const c2 = (!b) || c;
+      const c3 = a;
+      return { c1, c2, c3, all: c1 && c2 && c3 };
+    }
+
+    evalSat.addEventListener("click", () => {
+      const a = boolFromSelect(aVal);
+      const b = boolFromSelect(bVal);
+      const c = boolFromSelect(cVal);
+      const out = evalCNF(a, b, c);
+
+      satBreakdown.innerHTML = [
+        `Clause1 (!A or B) = ${out.c1 ? "T" : "F"}`,
+        `Clause2 (!B or C) = ${out.c2 ? "T" : "F"}`,
+        `Clause3 (A) = ${out.c3 ? "T" : "F"}`
+      ].join("<br>");
+
+      satResult.innerHTML = out.all
+        ? "CNF value: <span class='ok'>TRUE (satisfying assignment)</span>"
+        : "CNF value: <span class='bad'>FALSE</span>";
+    });
+
+    searchSat.addEventListener("click", () => {
+      const tries = [];
+      let found = null;
+
+      [false, true].forEach((a) => {
+        [false, true].forEach((b) => {
+          [false, true].forEach((c) => {
+            if (found) return;
+            const out = evalCNF(a, b, c);
+            tries.push(`A=${a ? 1 : 0}, B=${b ? 1 : 0}, C=${c ? 1 : 0} => ${out.all ? "SAT" : "UNSAT"}`);
+            if (out.all) {
+              found = { a, b, c };
+            }
+          });
+        });
+      });
+
+      satSearchLog.innerHTML = tries.join("<br>");
+      if (found) {
+        satSearchResult.innerHTML = `Found satisfying assignment: <span class='ok'>A=${found.a ? "T" : "F"}, B=${found.b ? "T" : "F"}, C=${found.c ? "T" : "F"}</span>`;
+      } else {
+        satSearchResult.innerHTML = "No satisfying assignment: <span class='bad'>UNSAT</span>.";
+      }
+    });
+
+    const fluAli = document.getElementById("fluAli");
+    const fluRiya = document.getElementById("fluRiya");
+    const fluSam = document.getElementById("fluSam");
+    const inferFOL = document.getElementById("inferFOL");
+    const resetFOL = document.getElementById("resetFOL");
+    const folFacts = document.getElementById("folFacts");
+    const folResult = document.getElementById("folResult");
+    const checkForAll = document.getElementById("checkForAll");
+    const checkExists = document.getElementById("checkExists");
+    const quantResult = document.getElementById("quantResult");
+
+    const domain = ["Ali", "Riya", "Sam"];
+
+    function currentFluFacts() {
+      return {
+        Ali: fluAli.checked,
+        Riya: fluRiya.checked,
+        Sam: fluSam.checked
+      };
+    }
+
+    function renderFOLFacts() {
+      const flu = currentFluFacts();
+      const base = domain.map((name) => `HasFlu(${name}) = ${flu[name] ? "T" : "F"}`);
+      const inferred = domain
+        .filter((name) => flu[name])
+        .map((name) => `NeedsRest(${name})`);
+
+      folFacts.innerHTML = [...base, "", "Inferred facts:", ...inferred].join("<br>");
+      folResult.textContent = inferred.length
+        ? `Instantiated rule for ${inferred.length} person(s).`
+        : "No NeedsRest facts inferred because no HasFlu facts are true.";
+    }
+
+    inferFOL.addEventListener("click", renderFOLFacts);
+    resetFOL.addEventListener("click", () => {
+      fluAli.checked = true;
+      fluRiya.checked = false;
+      fluSam.checked = true;
+      folFacts.innerHTML = "";
+      folResult.textContent = "Inference will instantiate the universal rule for each person.";
+      quantResult.textContent = "Run a quantifier check after setting facts.";
+    });
+
+    checkForAll.addEventListener("click", () => {
+      const flu = currentFluFacts();
+      const allTrue = domain.every((name) => flu[name]);
+      quantResult.innerHTML = allTrue
+        ? "forall p HasFlu(p): <span class='ok'>TRUE</span>"
+        : "forall p HasFlu(p): <span class='bad'>FALSE</span>";
+    });
+
+    checkExists.addEventListener("click", () => {
+      const flu = currentFluFacts();
+      const anyTrue = domain.some((name) => flu[name]);
+      quantResult.innerHTML = anyTrue
+        ? "exists p HasFlu(p): <span class='ok'>TRUE</span>"
+        : "exists p HasFlu(p): <span class='bad'>FALSE</span>";
+    });
+
+    const term1 = document.getElementById("term1");
+    const term2 = document.getElementById("term2");
+    const runUnify = document.getElementById("runUnify");
+    const demoUnify = document.getElementById("demoUnify");
+    const unifyResult = document.getElementById("unifyResult");
+
+    function parseTerm(input) {
+      const raw = input.replace(/\s+/g, "");
+      const m = raw.match(/^([A-Za-z_][A-Za-z0-9_]*)\((.*)\)$/);
+      if (!m) return null;
+      const pred = m[1];
+      const args = m[2].split(",").map((s) => s.trim()).filter(Boolean);
+      return { pred, args };
+    }
+
+    function isVariable(token) {
+      return /^[a-z][A-Za-z0-9_]*$/.test(token);
+    }
+
+    function unifyTerms(a, b) {
+      if (!a || !b) return { ok: false, reason: "Could not parse one of the terms." };
+      if (a.pred !== b.pred) return { ok: false, reason: `Predicate mismatch: ${a.pred} vs ${b.pred}` };
+      if (a.args.length !== b.args.length) return { ok: false, reason: "Arity mismatch." };
+
+      const subst = {};
+
+      for (let i = 0; i < a.args.length; i += 1) {
+        const x = a.args[i];
+        const y = b.args[i];
+
+        if (x === y) continue;
+
+        if (isVariable(x)) {
+          if (subst[x] && subst[x] !== y) {
+            return { ok: false, reason: `Conflict: ${x} maps to both ${subst[x]} and ${y}` };
+          }
+          subst[x] = y;
+          continue;
+        }
+
+        if (isVariable(y)) {
+          if (subst[y] && subst[y] !== x) {
+            return { ok: false, reason: `Conflict: ${y} maps to both ${subst[y]} and ${x}` };
+          }
+          subst[y] = x;
+          continue;
+        }
+
+        return { ok: false, reason: `Constant mismatch: ${x} vs ${y}` };
+      }
+
+      return { ok: true, subst };
+    }
+
+    runUnify.addEventListener("click", () => {
+      const t1 = parseTerm(term1.value);
+      const t2 = parseTerm(term2.value);
+      const out = unifyTerms(t1, t2);
+
+      if (!out.ok) {
+        unifyResult.innerHTML = `Unification failed: <span class='bad'>${out.reason}</span>`;
+        return;
+      }
+
+      const keys = Object.keys(out.subst);
+      if (!keys.length) {
+        unifyResult.innerHTML = "Unification succeeded. No substitution needed (already identical).";
+        return;
+      }
+
+      const pairs = keys.map((k) => `${k}/${out.subst[k]}`).join(", ");
+      unifyResult.innerHTML = `Unification succeeded: <span class='ok'>theta = {${pairs}}</span>`;
+    });
+
+    demoUnify.addEventListener("click", () => {
+      term1.value = "Treats(DrSmith,Sam)";
+      term2.value = "Treats(DrJones,Sam)";
+      unifyResult.textContent = "Failure example loaded. Click Unify.";
+    });
+  </script>
+</body>
+</html>

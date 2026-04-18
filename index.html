@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Slides Hub</title>
+  <style>
+    :root {
+      --bg: #f6f8fa;
+      --surface: #ffffff;
+      --ink: #1f2328;
+      --muted: #59636e;
+      --line: #d0d7de;
+      --line-soft: #d8dee4;
+      --primary: #0969da;
+      --primary-hover: #0550ae;
+      --success-bg: #dafbe1;
+      --success-ink: #1a7f37;
+      --note-bg: #ddf4ff;
+      --note-ink: #0969da;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 16px 34px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .topbar {
+      background: #24292f;
+      color: #f0f6fc;
+      border-bottom: 1px solid #1b1f24;
+      margin: 0 -16px;
+      padding: 10px 16px;
+    }
+
+    .topbar-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .hero {
+      margin-top: 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.2rem, 2vw, 1.55rem);
+      line-height: 1.25;
+    }
+
+    .hero p {
+      margin: 8px 0 0;
+      max-width: 780px;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1.06rem;
+      color: var(--ink);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .lock-status {
+      display: inline-block;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #f6f8fa;
+      color: #57606a;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+    }
+
+    .lock-status.open {
+      background: var(--success-bg);
+      color: var(--success-ink);
+      border-color: #aceebb;
+    }
+
+    .lock-status.locked {
+      background: #fff8c5;
+      color: #9a6700;
+      border-color: #d4a72c;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .link {
+      text-decoration: none;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--ink);
+      background: #f6f8fa;
+      transition: 140ms ease;
+    }
+
+    .link:hover {
+      background: #eef2f6;
+      border-color: #afb8c1;
+    }
+
+    .link.primary {
+      color: #ffffff;
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .link.primary:hover {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+    }
+
+    .card.locked {
+      background: #f6f8fa;
+    }
+
+    .card.locked p {
+      color: #6e7781;
+    }
+
+    .card.locked .link {
+      pointer-events: none;
+      opacity: 0.55;
+      background: #f6f8fa;
+      border-color: #d8dee4;
+      color: #6e7781;
+    }
+
+    .pill {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 3px 8px;
+      margin-right: 6px;
+      margin-bottom: 2px;
+      border: 1px solid transparent;
+    }
+
+    .p-blue {
+      background: var(--note-bg);
+      color: var(--note-ink);
+      border-color: #b6e3ff;
+    }
+
+    .p-orange {
+      background: var(--success-bg);
+      color: var(--success-ink);
+      border-color: #aceebb;
+    }
+
+    .foot {
+      color: var(--muted);
+      font-size: 0.84rem;
+      margin-top: 2px;
+      background: var(--surface);
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+      .hero { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="topbar">
+      <div class="topbar-inner">rajesh / aislides</div>
+    </section>
+
+    <section class="hero">
+      <h1>Foundations of AI Course Materials</h1>
+      <p>
+        Central hub for lecture slides and interactive demos. Use the PDF for teaching,
+        TEX for source/reference, and HTML demos for in-class interaction.
+      </p>
+    </section>
+
+    <section class="grid">
+      <article class="card" data-lecture="1">
+        <div class="card-head">
+          <h2>Lecture 1</h2>
+          <span class="lock-status open" data-lock-status>Open</span>
+        </div>
+        <p><span class="pill p-blue">Slides</span>Foundational lecture deck and task variant.</p>
+        <div class="links">
+          <a class="link primary lecture-link" href="Lecture%201/main.pdf">Main PDF</a>
+          <a class="link lecture-link" href="Lecture%201/main.tex">Main TEX</a>
+          <a class="link lecture-link" href="Lecture%201/Task1/main.pdf">Task1 PDF</a>
+          <a class="link lecture-link" href="Lecture%201/Task1/main.tex">Task1 TEX</a>
+        </div>
+      </article>
+
+      <article class="card" data-lecture="2">
+        <div class="card-head">
+          <h2>Lecture 2</h2>
+          <span class="lock-status open" data-lock-status>Open</span>
+        </div>
+        <p><span class="pill p-blue">Slides</span><span class="pill p-orange">Demo</span>Search concepts with interactive visualizations.</p>
+        <div class="links">
+          <a class="link primary lecture-link" href="Lecture%202/main.pdf">Main PDF</a>
+          <a class="link lecture-link" href="Lecture%202/main.tex">Main TEX</a>
+          <a class="link lecture-link" href="Lecture%202/search-visualization.html">Demo 1</a>
+          <a class="link lecture-link" href="Lecture%202/search-visualizations.html">Demo 2</a>
+        </div>
+      </article>
+
+      <article class="card" data-lecture="3">
+        <div class="card-head">
+          <h2>Lecture 3</h2>
+          <span class="lock-status open" data-lock-status>Open</span>
+        </div>
+        <p><span class="pill p-blue">Slides</span><span class="pill p-orange">Demo</span>Knowledge representation and inference interactive playground.</p>
+        <div class="links">
+          <a class="link primary lecture-link" href="Lecture%203/main.pdf">Main PDF</a>
+          <a class="link lecture-link" href="Lecture%203/main.tex">Main TEX</a>
+          <a class="link lecture-link" href="Lecture%203/kr-inference-demo.html">Interactive Demo</a>
+        </div>
+      </article>
+
+      <article class="card" data-lecture="4">
+        <div class="card-head">
+          <h2>Lecture 4</h2>
+          <span class="lock-status open" data-lock-status>Open</span>
+        </div>
+        <p><span class="pill p-blue">Slides</span><span class="pill p-orange">Demo</span>Machine learning foundations and algorithm visualizer.</p>
+        <div class="links">
+          <a class="link primary lecture-link" href="Lecture%204/main.pdf">Main PDF</a>
+          <a class="link lecture-link" href="Lecture%204/main.tex">Main TEX</a>
+          <a class="link lecture-link" href="Lecture%204/ml-algorithms-visualization.html">Interactive Demo</a>
+        </div>
+      </article>
+    </section>
+
+    <div class="foot">
+      Tip: after GitHub Pages is enabled on the main branch root, this file becomes your public course homepage.
+      <br />
+      <strong>Published lectures:</strong> <span id="publishedInfo">local preview (all lectures)</span>
+    </div>
+  </main>
+
+  <script>
+    async function applyLectureLocks() {
+      const cards = [...document.querySelectorAll(".card[data-lecture]")];
+      const publishedInfo = document.getElementById("publishedInfo");
+      if (!cards.length) return;
+
+      // Default local behavior: keep all lectures open if no release metadata exists.
+      let released = null;
+      try {
+        const res = await fetch("release-info.txt", { cache: "no-store" });
+        if (res.ok) {
+          const text = await res.text();
+          const match = text.match(/Published lectures:\s*([0-9,]+)/i);
+          if (match && match[1]) {
+            released = new Set(match[1].split(",").map((x) => x.trim()).filter(Boolean));
+          }
+        }
+      } catch (err) {
+        // Ignore; likely local file browsing without release-info.txt
+      }
+
+      if (!released) {
+        if (publishedInfo) {
+          publishedInfo.textContent = "local preview (all lectures)";
+        }
+        return;
+      }
+
+      if (publishedInfo) {
+        const sorted = [...released].sort((a, b) => Number(a) - Number(b));
+        publishedInfo.textContent = sorted.length ? sorted.join(", ") : "none";
+      }
+
+      cards.forEach((card) => {
+        const lecture = card.getAttribute("data-lecture");
+        const status = card.querySelector("[data-lock-status]");
+        const isOpen = released.has(lecture);
+
+        if (isOpen) {
+          card.classList.remove("locked");
+          if (status) {
+            status.classList.remove("locked");
+            status.classList.add("open");
+            status.textContent = "Open";
+          }
+        } else {
+          card.classList.add("locked");
+          if (status) {
+            status.classList.remove("open");
+            status.classList.add("locked");
+            status.textContent = "Locked";
+          }
+        }
+      });
+    }
+
+    applyLectureLocks();
+  </script>
+</body>
+</html>

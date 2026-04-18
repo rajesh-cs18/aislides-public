@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Search Visualizations</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --ink: #18202d;
+      --muted: #5b6678;
+      --line: #d9e1ef;
+      --accent: #0f766e;
+      --accent-2: #1d4ed8;
+      --accent-3: #ea580c;
+      --expanded: #dcfce7;
+      --frontier: #dbeafe;
+      --current: #ffedd5;
+      --goal: #dc2626;
+      --shadow: 0 10px 24px rgba(24, 32, 45, 0.09);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 10%, #e9f7f4 0 18%, transparent 30%),
+        radial-gradient(circle at 92% 8%, #e8efff 0 20%, transparent 32%),
+        var(--bg);
+      padding: 22px;
+    }
+
+    .wrap {
+      max-width: 1250px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid #e6ebf5;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      letter-spacing: 0.01em;
+    }
+
+    .sub {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .state-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .math {
+      display: grid;
+      gap: 10px;
+      font-size: 0.95rem;
+    }
+
+    .math .formula {
+      background: #f7fafc;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px;
+      font-weight: 600;
+    }
+
+    .math ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .algo-grid {
+      display: grid;
+      grid-template-columns: 330px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .control {
+      margin-bottom: 11px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.86rem;
+      font-weight: 700;
+      margin-bottom: 5px;
+      color: #364156;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    select,
+    input[type="range"],
+    button {
+      width: 100%;
+    }
+
+    select,
+    button {
+      border: 1px solid #d3dced;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 0.94rem;
+    }
+
+    button { cursor: pointer; }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 11px;
+    }
+
+    .primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .metrics {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 10px;
+      background: #fbfdff;
+    }
+
+    .metric .k {
+      font-size: 0.76rem;
+      color: var(--muted);
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .metric .v {
+      font-size: 0.92rem;
+      line-height: 1.35;
+    }
+
+    .teach-strip {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .teach-note {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f7fafc;
+      padding: 10px;
+      font-size: 0.88rem;
+      line-height: 1.4;
+      color: var(--muted);
+    }
+
+    .frontier-boxes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .frontier-item {
+      min-width: 54px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid #cfd9eb;
+      background: #eef4ff;
+      color: #1e3a8a;
+      font-weight: 700;
+      text-align: center;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    }
+
+    .frontier-item.priority {
+      background: #ecfeff;
+      color: #155e75;
+    }
+
+    .frontier-item.empty {
+      background: #f8fafc;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .frontier-guide {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .hint {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.38;
+    }
+
+    .canvas {
+      width: 100%;
+      height: 560px;
+      border: 1px solid #e3eaf7;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #fff 0, #f7fbff 100%);
+      display: block;
+    }
+
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.84rem;
+      margin-top: 9px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .edge { stroke: #94a1b8; stroke-width: 2.2; }
+    .edge.path { stroke: var(--accent); stroke-width: 4; }
+    .edge-label { fill: #465368; font-size: 12px; font-weight: 700; text-anchor: middle; dominant-baseline: middle; }
+
+    .node circle {
+      fill: #fff;
+      stroke: #7f8da6;
+      stroke-width: 2.5;
+      transition: 0.2s ease;
+    }
+
+    .node text {
+      font-size: 14px;
+      font-weight: 800;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      user-select: none;
+    }
+
+    .node.start circle { stroke: #0ea5e9; stroke-width: 3.1; }
+    .node.goal circle { stroke: var(--goal); stroke-width: 3.1; }
+    .node.frontier circle { fill: var(--frontier); stroke: #2563eb; }
+    .node.expanded circle { fill: var(--expanded); stroke: #16a34a; }
+    .node.current circle { fill: var(--current); stroke: var(--accent-3); stroke-width: 4; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 8px;
+      text-align: left;
+    }
+
+    th { background: #f6f9ff; }
+
+    .mono { font-family: Menlo, Monaco, "Courier New", monospace; }
+
+    @media (max-width: 980px) {
+      .state-grid,
+      .algo-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .canvas { height: 460px; }
+
+      .btn-row { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card">
+      <h1>Search Concepts: Visual Teaching Pack</h1>
+      <p class="sub">Includes separate visual treatment for state-space representation, BFS, DFS, UCS, Greedy, and A* on the same graph. The demo now also shows the frontier data structure directly.</p>
+    </section>
+
+    <section class="card">
+      <h1 style="font-size:1.1rem">1) State Space Representation</h1>
+      <div class="state-grid" style="margin-top:10px">
+        <svg id="stateSvg" viewBox="0 0 780 340" class="canvas" style="height:340px"></svg>
+        <div class="math">
+          <div class="formula mono">Problem = &lt; S, A, s0, G, c &gt;</div>
+          <ul>
+            <li><strong>S</strong>: set of states (nodes A..G)</li>
+            <li><strong>A</strong>: actions (traverse edges)</li>
+            <li><strong>s0</strong>: start node A</li>
+            <li><strong>G</strong>: goal test node G</li>
+            <li><strong>c</strong>: edge cost labels</li>
+          </ul>
+          <div class="formula">Use the same state space below to compare algorithms fairly.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h1 style="font-size:1.1rem">2) Algorithm Visualizer (BFS, DFS, UCS, Greedy, A*)</h1>
+      <div class="algo-grid" style="margin-top:10px">
+        <div>
+          <div class="control">
+            <label for="algo">Algorithm</label>
+            <select id="algo">
+              <option value="BFS">BFS (Breadth-First)</option>
+              <option value="DFS">DFS (Depth-First)</option>
+              <option value="UCS">UCS (Uniform-Cost)</option>
+              <option value="GREEDY">Greedy Best-First</option>
+              <option value="ASTAR">A*</option>
+            </select>
+          </div>
+
+          <div class="control">
+            <label for="step">Step</label>
+            <input id="step" type="range" min="0" max="0" value="0" />
+          </div>
+
+          <div class="btn-row">
+            <button id="prev">Prev</button>
+            <button id="next">Next</button>
+            <button id="reset">Reset</button>
+            <button id="play" class="primary">Play</button>
+          </div>
+
+          <div class="metrics">
+            <div class="metric"><div class="k">Removal Rule</div><div id="rule" class="v">-</div></div>
+            <div class="metric"><div class="k">Data Structure</div><div id="dsType" class="v">-</div></div>
+            <div class="metric"><div class="k">Expanded Order</div><div id="expanded" class="v">-</div></div>
+            <div class="metric"><div class="k">Frontier</div><div id="frontier" class="v">-</div></div>
+            <div class="metric">
+              <div class="k">Frontier Structure View</div>
+              <div id="dsCaption" class="v">-</div>
+              <div id="frontierBoxes" class="frontier-boxes"></div>
+              <div class="frontier-guide">
+                <span id="leftLabel">Front</span>
+                <span id="rightLabel">Back</span>
+              </div>
+            </div>
+            <div class="metric"><div class="k">Current Path</div><div id="path" class="v">-</div></div>
+            <div class="metric"><div class="k">Path Cost</div><div id="cost" class="v">-</div></div>
+            <div class="metric"><div class="k">Heuristic h(n)</div><div id="heur" class="v mono">A:6 B:4 C:5 D:1 E:2 F:1 G:0</div></div>
+          </div>
+
+          <div class="teach-strip">
+            <div id="teachNote" class="teach-note"></div>
+          </div>
+
+          <p id="algoHint" class="hint"></p>
+        </div>
+
+        <div>
+          <svg id="algoSvg" viewBox="0 0 860 560" class="canvas"></svg>
+          <div class="legend">
+            <span><span class="dot" style="background:#0ea5e9"></span>Start</span>
+            <span><span class="dot" style="background:#dc2626"></span>Goal border</span>
+            <span><span class="dot" style="background:#dbeafe"></span>Frontier</span>
+            <span><span class="dot" style="background:#dcfce7"></span>Expanded</span>
+            <span><span class="dot" style="background:#ffedd5"></span>Current</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h1 style="font-size:1.1rem">3) Side-by-Side Comparison Summary</h1>
+      <p class="sub">Computed from the same graph and neighbor ordering.</p>
+      <table id="summaryTable" style="margin-top:10px">
+        <thead>
+          <tr>
+            <th>Algorithm</th>
+            <th>Expanded Nodes</th>
+            <th>Solution Path</th>
+            <th>Cost</th>
+            <th>Classroom Takeaway</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const start = "A";
+    const goal = "G";
+
+    const h = { A: 6, B: 4, C: 5, D: 1, E: 2, F: 1, G: 0 };
+
+    const nodePos = {
+      A: { x: 100, y: 280 },
+      B: { x: 250, y: 140 },
+      C: { x: 250, y: 420 },
+      D: { x: 430, y: 90 },
+      E: { x: 430, y: 280 },
+      F: { x: 430, y: 470 },
+      G: { x: 700, y: 280 }
+    };
+
+    const edges = [
+      ["A", "B", 2], ["A", "C", 1],
+      ["B", "D", 5], ["B", "E", 2],
+      ["C", "E", 4], ["C", "F", 7],
+      ["D", "G", 1], ["E", "G", 3], ["F", "G", 1]
+    ];
+
+    const hints = {
+      BFS: "BFS expands by depth (queue). Good when all edges have equal cost.",
+      DFS: "DFS expands deepest-first (stack). Very memory-efficient, not guaranteed optimal.",
+      UCS: "UCS expands lowest g(n) first. Optimal when step costs are nonnegative.",
+      GREEDY: "Greedy expands lowest h(n) first. Fast directionally, but not always cheapest path.",
+      ASTAR: "A* expands lowest f(n)=g(n)+h(n). With admissible/consistent h, it is optimal."
+    };
+
+    const structureMeta = {
+      BFS: {
+        name: "Queue",
+        rule: "Remove the oldest node first.",
+        caption: "FIFO queue: leftmost item leaves next.",
+        leftLabel: "Dequeued Next",
+        rightLabel: "Newest Added",
+        teach: "Teaching line: BFS asks, 'Who has been waiting the longest?'"
+      },
+      DFS: {
+        name: "Stack",
+        rule: "Remove the most recently added node first.",
+        caption: "LIFO stack: leftmost item is the top of the stack.",
+        leftLabel: "Top / Pop",
+        rightLabel: "Bottom",
+        teach: "Teaching line: DFS asks, 'What is the deepest unfinished branch right now?'"
+      },
+      UCS: {
+        name: "Priority Queue by g(n)",
+        rule: "Remove the node with the smallest path cost g(n).",
+        caption: "Items are ordered by total cost from the start.",
+        leftLabel: "Lowest g(n)",
+        rightLabel: "Higher g(n)",
+        teach: "Teaching line: UCS asks, 'Which frontier node is currently cheapest to reach?'"
+      },
+      GREEDY: {
+        name: "Priority Queue by h(n)",
+        rule: "Remove the node with the smallest heuristic h(n).",
+        caption: "Items are ordered by estimated closeness to the goal.",
+        leftLabel: "Lowest h(n)",
+        rightLabel: "Higher h(n)",
+        teach: "Teaching line: Greedy asks, 'Which node looks closest to the goal?'"
+      },
+      ASTAR: {
+        name: "Priority Queue by f(n)=g(n)+h(n)",
+        rule: "Remove the node with the smallest estimated total cost f(n).",
+        caption: "Items are ordered by cost-so-far plus estimate-to-go.",
+        leftLabel: "Lowest f(n)",
+        rightLabel: "Higher f(n)",
+        teach: "Teaching line: A* asks, 'Which node looks best overall if I combine past cost and future estimate?'"
+      }
+    };
+
+    function makeAdj() {
+      const adj = {};
+      Object.keys(nodePos).forEach((k) => { adj[k] = []; });
+      edges.forEach(([u, v, w]) => {
+        adj[u].push({ to: v, w });
+        adj[v].push({ to: u, w });
+      });
+      Object.values(adj).forEach((arr) => arr.sort((a, b) => a.to.localeCompare(b.to)));
+      return adj;
+    }
+
+    const adj = makeAdj();
+
+    function edgeId(a, b) { return [a, b].sort().join("-"); }
+
+    function buildPath(parent, n) {
+      const p = [];
+      let cur = n;
+      while (cur) {
+        p.push(cur);
+        cur = parent[cur] ?? null;
+      }
+      return p.reverse();
+    }
+
+    function getCost(path) {
+      if (!path || path.length < 2) return 0;
+      let total = 0;
+      for (let i = 0; i < path.length - 1; i += 1) {
+        const e = adj[path[i]].find((x) => x.to === path[i + 1]);
+        total += e ? e.w : 0;
+      }
+      return total;
+    }
+
+    function sortedOpen(open, keyFn) {
+      open.sort((a, b) => {
+        const ka = keyFn(a);
+        const kb = keyFn(b);
+        if (ka !== kb) return ka - kb;
+        return a.node.localeCompare(b.node);
+      });
+    }
+
+    function runBFS() {
+      const q = [start];
+      const reached = new Set([start]);
+      const parent = { [start]: null };
+      const steps = [];
+
+      while (q.length) {
+        const cur = q.shift();
+        const order = steps.map((s) => s.expanded).concat([cur]);
+
+        if (cur !== goal) {
+          for (const n of adj[cur]) {
+            if (!reached.has(n.to)) {
+              reached.add(n.to);
+              parent[n.to] = cur;
+              q.push(n.to);
+            }
+          }
+        }
+
+        const path = cur === goal ? buildPath(parent, goal) : null;
+        steps.push({ expanded: cur, expandedOrder: order, frontier: [...q], path, cost: path ? getCost(path) : null });
+        if (cur === goal) break;
+      }
+      return steps;
+    }
+
+    function runDFS() {
+      const st = [start];
+      const reached = new Set([start]);
+      const parent = { [start]: null };
+      const steps = [];
+
+      while (st.length) {
+        const cur = st.pop();
+        const order = steps.map((s) => s.expanded).concat([cur]);
+
+        if (cur !== goal) {
+          const nbrs = [...adj[cur]].reverse();
+          for (const n of nbrs) {
+            if (!reached.has(n.to)) {
+              reached.add(n.to);
+              parent[n.to] = cur;
+              st.push(n.to);
+            }
+          }
+        }
+
+        const path = cur === goal ? buildPath(parent, goal) : null;
+        steps.push({ expanded: cur, expandedOrder: order, frontier: [...st].reverse(), path, cost: path ? getCost(path) : null });
+        if (cur === goal) break;
+      }
+      return steps;
+    }
+
+    function runUCS() {
+      const open = [{ node: start, g: 0 }];
+      const best = { [start]: 0 };
+      const parent = { [start]: null };
+      const closed = new Set();
+      const steps = [];
+
+      while (open.length) {
+        sortedOpen(open, (x) => x.g);
+        const curEnt = open.shift();
+        if (closed.has(curEnt.node)) continue;
+        const cur = curEnt.node;
+        closed.add(cur);
+
+        if (cur !== goal) {
+          for (const n of adj[cur]) {
+            const g2 = best[cur] + n.w;
+            if (best[n.to] === undefined || g2 < best[n.to]) {
+              best[n.to] = g2;
+              parent[n.to] = cur;
+              open.push({ node: n.to, g: g2 });
+            }
+          }
+        }
+
+        sortedOpen(open, (x) => x.g);
+        const order = steps.map((s) => s.expanded).concat([cur]);
+        const path = cur === goal ? buildPath(parent, goal) : null;
+        steps.push({
+          expanded: cur,
+          expandedOrder: order,
+          frontier: open.map((x) => `${x.node}(${x.g})`),
+          frontierNodes: open.map((x) => x.node),
+          path,
+          cost: path ? getCost(path) : null
+        });
+        if (cur === goal) break;
+      }
+      return steps;
+    }
+
+    function runGreedy() {
+      const open = [{ node: start }];
+      const reached = new Set([start]);
+      const parent = { [start]: null };
+      const steps = [];
+
+      while (open.length) {
+        sortedOpen(open, (x) => h[x.node]);
+        const cur = open.shift().node;
+
+        if (cur !== goal) {
+          for (const n of adj[cur]) {
+            if (!reached.has(n.to)) {
+              reached.add(n.to);
+              parent[n.to] = cur;
+              open.push({ node: n.to });
+            }
+          }
+        }
+
+        sortedOpen(open, (x) => h[x.node]);
+        const order = steps.map((s) => s.expanded).concat([cur]);
+        const path = cur === goal ? buildPath(parent, goal) : null;
+        steps.push({
+          expanded: cur,
+          expandedOrder: order,
+          frontier: open.map((x) => `${x.node}(h=${h[x.node]})`),
+          frontierNodes: open.map((x) => x.node),
+          path,
+          cost: path ? getCost(path) : null
+        });
+        if (cur === goal) break;
+      }
+      return steps;
+    }
+
+    function runAStar() {
+      const open = [{ node: start, g: 0, f: h[start] }];
+      const gBest = { [start]: 0 };
+      const parent = { [start]: null };
+      const closed = new Set();
+      const steps = [];
+
+      while (open.length) {
+        sortedOpen(open, (x) => x.f);
+        const curEnt = open.shift();
+        if (closed.has(curEnt.node)) continue;
+        const cur = curEnt.node;
+        closed.add(cur);
+
+        if (cur !== goal) {
+          for (const n of adj[cur]) {
+            const g2 = gBest[cur] + n.w;
+            if (gBest[n.to] === undefined || g2 < gBest[n.to]) {
+              gBest[n.to] = g2;
+              parent[n.to] = cur;
+              open.push({ node: n.to, g: g2, f: g2 + h[n.to] });
+            }
+          }
+        }
+
+        sortedOpen(open, (x) => x.f);
+        const order = steps.map((s) => s.expanded).concat([cur]);
+        const path = cur === goal ? buildPath(parent, goal) : null;
+        steps.push({
+          expanded: cur,
+          expandedOrder: order,
+          frontier: open.map((x) => `${x.node}(f=${x.f})`),
+          frontierNodes: open.map((x) => x.node),
+          path,
+          cost: path ? getCost(path) : null
+        });
+        if (cur === goal) break;
+      }
+      return steps;
+    }
+
+    const runs = {
+      BFS: runBFS(),
+      DFS: runDFS(),
+      UCS: runUCS(),
+      GREEDY: runGreedy(),
+      ASTAR: runAStar()
+    };
+
+    function drawGraph(svgId, showHeuristic = false) {
+      const svg = document.getElementById(svgId);
+      svg.innerHTML = "";
+
+      const edgeLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      const labelLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      const nodeLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+      svg.append(edgeLayer, labelLayer, nodeLayer);
+
+      for (const [u, v, w] of edges) {
+        const p1 = nodePos[u], p2 = nodePos[v];
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", p1.x); line.setAttribute("y1", p1.y);
+        line.setAttribute("x2", p2.x); line.setAttribute("y2", p2.y);
+        line.setAttribute("class", "edge");
+        line.dataset.edge = edgeId(u, v);
+        edgeLayer.appendChild(line);
+
+        const lx = (p1.x + p2.x) / 2;
+        const ly = (p1.y + p2.y) / 2;
+        const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t.setAttribute("x", lx); t.setAttribute("y", ly - 9); t.setAttribute("class", "edge-label");
+        t.textContent = w;
+        labelLayer.appendChild(t);
+      }
+
+      for (const id of Object.keys(nodePos)) {
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("class", "node");
+        g.dataset.node = id;
+
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.setAttribute("cx", nodePos[id].x);
+        c.setAttribute("cy", nodePos[id].y);
+        c.setAttribute("r", 30);
+
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("x", nodePos[id].x);
+        txt.setAttribute("y", nodePos[id].y + 1);
+        txt.textContent = id;
+
+        g.append(c, txt);
+
+        if (showHeuristic) {
+          const hText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          hText.setAttribute("x", nodePos[id].x);
+          hText.setAttribute("y", nodePos[id].y + 48);
+          hText.setAttribute("class", "edge-label");
+          hText.textContent = `h=${h[id]}`;
+          g.appendChild(hText);
+        }
+
+        nodeLayer.appendChild(g);
+      }
+    }
+
+    drawGraph("stateSvg", false);
+    drawGraph("algoSvg", true);
+
+    const algoEl = document.getElementById("algo");
+    const stepEl = document.getElementById("step");
+    const prevEl = document.getElementById("prev");
+    const nextEl = document.getElementById("next");
+    const resetEl = document.getElementById("reset");
+    const playEl = document.getElementById("play");
+
+    const expandedEl = document.getElementById("expanded");
+    const frontierEl = document.getElementById("frontier");
+    const pathEl = document.getElementById("path");
+    const costEl = document.getElementById("cost");
+    const algoHintEl = document.getElementById("algoHint");
+    const ruleEl = document.getElementById("rule");
+    const dsTypeEl = document.getElementById("dsType");
+    const dsCaptionEl = document.getElementById("dsCaption");
+    const frontierBoxesEl = document.getElementById("frontierBoxes");
+    const leftLabelEl = document.getElementById("leftLabel");
+    const rightLabelEl = document.getElementById("rightLabel");
+    const teachNoteEl = document.getElementById("teachNote");
+
+    let algo = "BFS";
+    let step = 0;
+    let timer = null;
+
+    function stopTimer() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+      playEl.textContent = "Play";
+    }
+
+    function highlightPath(path) {
+      const svg = document.getElementById("algoSvg");
+      svg.querySelectorAll(".edge").forEach((e) => e.classList.remove("path"));
+      if (!path || path.length < 2) return;
+
+      for (let i = 0; i < path.length - 1; i += 1) {
+        const k = edgeId(path[i], path[i + 1]);
+        const e = svg.querySelector(`.edge[data-edge='${k}']`);
+        if (e) e.classList.add("path");
+      }
+    }
+
+    function renderFrontierBoxes(currentAlgo, frontier) {
+      const meta = structureMeta[currentAlgo];
+      frontierBoxesEl.innerHTML = "";
+
+      if (!frontier || frontier.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "frontier-item empty";
+        empty.textContent = "empty";
+        frontierBoxesEl.appendChild(empty);
+      } else {
+        frontier.forEach((item) => {
+          const div = document.createElement("div");
+          div.className = "frontier-item";
+          if (meta.name.includes("Priority Queue")) {
+            div.classList.add("priority");
+          }
+          div.textContent = item;
+          frontierBoxesEl.appendChild(div);
+        });
+      }
+
+      dsTypeEl.textContent = meta.name;
+      ruleEl.textContent = meta.rule;
+      dsCaptionEl.textContent = meta.caption;
+      leftLabelEl.textContent = meta.leftLabel;
+      rightLabelEl.textContent = meta.rightLabel;
+      teachNoteEl.textContent = meta.teach;
+    }
+
+    function render() {
+      const data = runs[algo];
+      const s = data[step];
+
+      stepEl.max = String(Math.max(0, data.length - 1));
+      stepEl.value = String(step);
+
+      const expandedSet = new Set(s.expandedOrder.slice(0, -1));
+      const frontierNodes = s.frontierNodes ? s.frontierNodes : (s.frontier || []).map((x) => String(x).split("(")[0]);
+      const frontierSet = new Set(frontierNodes);
+
+      const svg = document.getElementById("algoSvg");
+      svg.querySelectorAll(".node").forEach((n) => {
+        const id = n.dataset.node;
+        n.classList.remove("start", "goal", "frontier", "expanded", "current");
+        if (id === start) n.classList.add("start");
+        if (id === goal) n.classList.add("goal");
+        if (expandedSet.has(id)) n.classList.add("expanded");
+        if (frontierSet.has(id)) n.classList.add("frontier");
+        if (id === s.expanded) n.classList.add("current");
+      });
+
+      highlightPath(s.path);
+
+      expandedEl.textContent = s.expandedOrder.join(" -> ");
+      frontierEl.textContent = (s.frontier && s.frontier.length) ? s.frontier.join(", ") : "(empty)";
+      pathEl.textContent = s.path ? s.path.join(" -> ") : "Not reached yet";
+      costEl.textContent = s.cost != null ? String(s.cost) : "-";
+      algoHintEl.textContent = hints[algo];
+      renderFrontierBoxes(algo, s.frontier || []);
+
+      playEl.textContent = timer ? "Pause" : "Play";
+    }
+
+    function resetAlgo(newAlgo) {
+      algo = newAlgo;
+      step = 0;
+      stopTimer();
+      render();
+    }
+
+    algoEl.addEventListener("change", (e) => resetAlgo(e.target.value));
+
+    stepEl.addEventListener("input", (e) => {
+      step = Number(e.target.value);
+      stopTimer();
+      render();
+    });
+
+    prevEl.addEventListener("click", () => {
+      step = Math.max(0, step - 1);
+      render();
+    });
+
+    nextEl.addEventListener("click", () => {
+      step = Math.min(runs[algo].length - 1, step + 1);
+      render();
+    });
+
+    resetEl.addEventListener("click", () => {
+      step = 0;
+      stopTimer();
+      render();
+    });
+
+    playEl.addEventListener("click", () => {
+      if (timer) {
+        stopTimer();
+        return;
+      }
+
+      timer = setInterval(() => {
+        if (step >= runs[algo].length - 1) {
+          stopTimer();
+          return;
+        }
+        step += 1;
+        render();
+      }, 900);
+
+      render();
+    });
+
+    function summarize() {
+      const tbody = document.querySelector("#summaryTable tbody");
+      tbody.innerHTML = "";
+      const rows = [
+        ["BFS", "Shortest depth (if unweighted)"] ,
+        ["DFS", "Low memory, risky path quality"],
+        ["UCS", "Optimal by path cost"],
+        ["GREEDY", "Fast direction, not always optimal"],
+        ["ASTAR", "Optimal with good admissible heuristic"]
+      ];
+
+      rows.forEach(([name, note]) => {
+        const run = runs[name];
+        const last = run[run.length - 1];
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${name}</td>
+          <td>${last.expandedOrder.length}</td>
+          <td>${last.path ? last.path.join(" -> ") : "-"}</td>
+          <td>${last.cost != null ? last.cost : "-"}</td>
+          <td>${note}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    summarize();
+    render();
+  </script>
+</body>
+</html>

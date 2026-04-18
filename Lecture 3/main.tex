@@ -1,0 +1,615 @@
+\documentclass[10pt]{beamer}
+
+% --- Modern Theme ---
+\usetheme{metropolis}
+\usecolortheme{default}
+\setbeamercolor{background canvas}{bg=white}
+\metroset{sectionpage=none,subsectionpage=none}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[scale=2]{ccicons}
+\usepackage{pgfplots}
+\usepgfplotslibrary{dateplot}
+\usepackage{xspace}
+
+% --- Title Information ---
+\title{Foundations of Artificial Intelligence}
+\subtitle{Part III: Knowledge Representation \& Inference}
+\institute{Department of Computer Science}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}{Lecture Roadmap}
+    \setbeamertemplate{section in toc}[sections numbered]
+    \tableofcontents[hideallsubsections]
+\end{frame}
+
+\begin{frame}{Learning Objectives}
+    By the end of this lecture, you should be able to:
+    \begin{itemize}
+        \item Explain why representation choices determine what an AI system can infer.
+        \item Model facts and rules in propositional and first-order logic.
+        \item Apply inference ideas: entailment, chaining, and resolution at a conceptual level.
+        \item Relate rule systems, semantic networks, and ontologies to real AI applications.
+        \item Analyze the strengths/limits of each representation for practical tasks.
+    \end{itemize}
+\end{frame}
+
+\section{Why Knowledge Representation?}
+
+\begin{frame}{From Data to Knowledge}
+    AI systems need more than raw data:
+    \begin{itemize}
+        \item \textbf{Data:} isolated observations (e.g., temperature is $39^{\circ}\mathrm{C}$).
+        \item \textbf{Information:} structured observations (patient has fever + cough).
+        \item \textbf{Knowledge:} reusable, inferable structure (if fever and cough, suspect infection).
+    \end{itemize}
+    \vspace{0.2cm}
+    \textit{Book perspective: a representation is useful only if it supports effective inference.}
+\end{frame}
+
+\begin{frame}{Real-World Motivation}
+    \begin{itemize}
+        \item \textbf{Clinical decision support:} map symptoms to diagnostic hypotheses.
+        \item \textbf{Fraud detection:} infer suspicious patterns from transaction relations.
+        \item \textbf{Customer support bots:} apply business rules consistently.
+        \item \textbf{Industrial maintenance:} reason over component dependencies and failure rules.
+    \end{itemize}
+    \vspace{0.25cm}
+    Common requirement: \textbf{explicit knowledge} + \textbf{traceable reasoning}.
+\end{frame}
+
+\begin{frame}{What Makes a Good Representation?}
+    We judge KR by four practical criteria:
+    \begin{enumerate}
+        \item \textbf{Expressiveness:} Can it describe what matters?
+        \item \textbf{Inference support:} Can we derive useful conclusions?
+        \item \textbf{Computational cost:} Can we reason in acceptable time?
+        \item \textbf{Maintainability:} Can humans update and validate it?
+    \end{enumerate}
+\end{frame}
+
+\section{Logic Foundations}
+
+\begin{frame}{Propositional Logic: Core Idea}
+    Propositional logic is the \textbf{simplest formal language} for expressing and reasoning about truth.
+    \begin{itemize}
+        \item \textbf{Atomic propositions} are the basic building blocks — indivisible statements that are either \emph{true} or \emph{false} (e.g., $P$ = "It is raining", $Q$ = "The road is wet").
+        \item \textbf{Connectives} combine propositions into complex formulas:
+            $\neg$ (not), $\land$ (and), $\lor$ (or), $\Rightarrow$ (if-then), $\Leftrightarrow$ (if and only if).
+        \item A \textbf{model} (or interpretation) assigns True/False to every atom; a formula is evaluated under this assignment.
+        \item \textbf{Limitation:} Propositions are \emph{flat} — no objects, no variables, no structure inside. Every distinct fact needs its own symbol.
+    \end{itemize}
+    \vspace{0.15cm}
+    \textbf{Smart-home example:}
+    \[
+        (\text{Smoke} \land \text{Heat}) \Rightarrow \text{Alarm}
+    \]
+    If both sensors trigger, sound the alarm. This single rule replaces ad-hoc 
+    if/else code and is \emph{inspectable, explainable, and reusable}.
+\end{frame}
+
+\begin{frame}{Semantics (1/2): Core Concepts}
+    \textbf{Semantics} defines \emph{what a formula means} — its truth value across all possible worlds (models).
+
+    \vspace{0.2cm}
+    \begin{itemize}
+        \item A \textbf{model} (or interpretation) assigns \emph{True} or \emph{False} to every atomic proposition.
+              Think of it as one possible ``state of the world.''
+        \item If $KB$ uses $n$ atoms, there are $2^n$ possible models to consider.
+              With 3 atoms, that is 8 worlds; with 10 atoms, 1024 worlds.
+        \item A formula is \textbf{true under a model} if the assignment makes it evaluate to True.
+        \item A model \textbf{satisfies} $KB$ if \emph{every} sentence in $KB$ is true under it.
+    \end{itemize}
+
+    \vspace{0.3cm}
+    \textit{Semantics is what separates logic from mere symbol manipulation — it grounds every symbol in meaning.}
+\end{frame}
+
+\begin{frame}{Semantics (2/2): Truth Table Example}
+    \textbf{Example:} Let $P$ = ``it is raining'' and $Q$ = ``the road is wet.''
+
+    \vspace{0.2cm}
+    We evaluate the formula $P \Rightarrow Q$ across all four possible models:
+
+    \vspace{0.15cm}
+    \begin{center}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{cc|cl}
+        \toprule
+        $P$ & $Q$ & $P \Rightarrow Q$ & Interpretation \\
+        \midrule
+        T & T & T & Rained and road is wet — rule holds. \\
+        T & F & \alert{F} & Rained but road is dry — \alert{rule violated!} \\
+        F & T & T & No rain, road wet (other cause) — rule holds. \\
+        F & F & T & No rain, road dry — rule holds vacuously. \\
+        \bottomrule
+    \end{tabular}
+    \end{center}
+
+    \vspace{0.2cm}
+    The implication fails in \textbf{only one} model — when the antecedent is true but the consequent is false.
+
+    \vspace{0.1cm}
+    \textit{A formula is semantically meaningful precisely because we can identify which worlds satisfy it.}
+\end{frame}
+
+\begin{frame}{Entailment}
+    \small
+    \textbf{Entailment} ($KB \models \alpha$) is the central concept of logical reasoning:
+    \[
+        KB \models \alpha \quad \iff \quad \text{every model satisfying } KB \text{ also satisfies } \alpha
+    \]
+    Intuitively: \emph{``If everything in $KB$ is true, then $\alpha$ must be true too — no escape.''}
+
+    \vspace{0.08cm}
+    \textbf{Example:}
+    \begin{itemize}\setlength{\itemsep}{1pt}
+        \item $KB = \{ P \Rightarrow Q,\; P \}$
+        \item In every model where both $P$ and $P \Rightarrow Q$ hold, $Q$ must hold.
+        \item Therefore: $KB \models Q$.
+    \end{itemize}
+
+    \vspace{0.08cm}
+    \textbf{Entailment vs.\ Derivation — a critical distinction:}
+    \begin{itemize}\setlength{\itemsep}{2pt}
+        \item $KB \models \alpha$ \;(entailment) — a \emph{semantic} claim: about truth across all worlds.
+        \item $KB \vdash \alpha$ \;(derivation) — a \emph{syntactic} claim: produced by applying inference rules.
+        \item \textbf{Sound} system: $KB \vdash \alpha \;\Rightarrow\; KB \models \alpha$ \quad (never derives falsehoods)
+        \item \textbf{Complete} system: $KB \models \alpha \;\Rightarrow\; KB \vdash \alpha$ \quad (misses nothing true)
+    \end{itemize}
+
+    \vspace{0.06cm}
+    \textit{Entailment is the gold standard. Inference procedures try to match it efficiently.}
+\end{frame}
+
+\begin{frame}{Validity}
+    \small
+    A sentence is \textbf{valid} (a \emph{tautology}) if it is true in \textbf{every possible model} — regardless of what the atoms mean.
+
+    \vspace{0.06cm}
+    \textbf{Examples of valid sentences:}
+    \begin{itemize}\setlength{\itemsep}{1pt}
+        \item $P \lor \neg P$ \;— always true (law of excluded middle).
+        \item $(P \Rightarrow Q) \Leftrightarrow (\neg Q \Rightarrow \neg P)$ \;— contrapositive equivalence.
+        \item $\neg (P \land \neg P)$ \;— contradiction can never hold (law of non-contradiction).
+    \end{itemize}
+
+    \vspace{0.06cm}
+    \textbf{Three-way classification of sentences:}
+    \begin{center}
+    \renewcommand{\arraystretch}{1.1}
+    \begin{tabular}{>{\bfseries}lll}
+        \toprule
+        Type & True in & Example \\
+        \midrule
+        Valid (tautology) & Every model & $P \lor \neg P$ \\
+        Satisfiable & At least one model & $P \land Q$ \\
+        Unsatisfiable & No model & $P \land \neg P$ \\
+        \bottomrule
+    \end{tabular}
+    \end{center}
+
+    \vspace{0.06cm}
+    \textbf{Why validity matters for inference:}\\
+    Resolution provers prove $KB \models \alpha$ by showing $KB \land \neg\alpha$ is \emph{unsatisfiable} —
+    turning an entailment question into a satisfiability check.
+\end{frame}
+
+\begin{frame}{Mini Propositional Example}
+    \textbf{Scenario:} A delivery system has two rules about road conditions.
+
+    \vspace{0.1cm}
+    \textbf{Knowledge Base (KB):}
+    \[
+    \begin{aligned}
+      &\text{(1)}\quad R \Rightarrow W \quad \text{(``If it rained, the road is wet.'')} \\
+      &\text{(2)}\quad W \Rightarrow D \quad \text{(``If the road is wet, deliveries are delayed.'')} \\
+      &\text{(3)}\quad R \quad\quad\quad \text{(``It rained.'' — observed fact)}
+    \end{aligned}
+    \]
+
+    \vspace{0.1cm}
+    \textbf{Query:} Is $D$ (delivery delayed) entailed?
+
+    \vspace{0.1cm}
+    \textbf{Step-by-step inference via Modus Ponens:}
+    \[
+      \frac{R \Rightarrow W,\quad R}{W} \qquad \text{then} \qquad \frac{W \Rightarrow D,\quad W}{D}
+    \]
+
+    \textbf{Result:} $KB \vdash D$, and since the system is sound, $KB \models D$.
+
+    \vspace{0.1cm}
+    \textit{Insight: Modus Ponens fires rules like a chain. Each step produces a new fact that can trigger the next rule. This is \textbf{forward chaining} in action.}
+\end{frame}
+
+\begin{frame}{CNF and SAT (1/2): Core Idea}
+        \textbf{CNF (Conjunctive Normal Form)} is a standard way to write formulas.
+
+        \vspace{0.1cm}
+        \begin{itemize}
+                \item \textbf{Literal:} $A$ or $\neg A$
+                \item \textbf{Clause:} OR of literals, e.g., $(\neg A \lor B)$
+                \item \textbf{CNF:} AND of clauses
+        \end{itemize}
+
+        \vspace{0.1cm}
+        Example CNF:
+        \[
+            (\neg A \lor B) \land (\neg B \lor C) \land A
+        \]
+
+        \vspace{0.1cm}
+        \textbf{Why CNF?}
+        \begin{itemize}
+                \item SAT solvers are optimized for this shape.
+                \item Uniform format makes reasoning faster in practice.
+        \end{itemize}
+\end{frame}
+
+\begin{frame}{CNF and SAT (2/2): SAT in Practice}
+        \textbf{SAT question:} Is there \emph{any} assignment that makes the CNF true?
+
+        \vspace{0.12cm}
+        \[
+            (\neg A \lor B) \land (\neg B \lor C) \land A
+        \]
+
+        \vspace{0.08cm}
+        Try $A{=}T, B{=}T, C{=}T$:
+        \begin{itemize}
+                \item $(\neg A \lor B) = (F \lor T) = T$
+                \item $(\neg B \lor C) = (F \lor T) = T$
+                \item $A = T$
+        \end{itemize}
+        So this formula is \textbf{satisfiable}.
+
+        \vspace{0.1cm}
+        \textbf{Where SAT is used:}
+        \begin{itemize}
+                \item planning,
+                \item hardware/software verification,
+                \item scheduling and timetabling.
+        \end{itemize}
+\end{frame}
+
+\begin{frame}{First-Order Logic (FOL) (1/2): Why We Need It}
+        \textbf{Problem with propositional logic:}
+        \begin{itemize}
+                \item It cannot naturally talk about \emph{objects} and \emph{relations}.
+                \item You need one symbol per fact (not scalable).
+        \end{itemize}
+
+        \vspace{0.12cm}
+        Example idea: ``Every patient with fever needs rest."
+        \begin{itemize}
+                \item In propositional logic: many separate symbols/rules.
+                \item In FOL: one reusable rule for all patients.
+        \end{itemize}
+
+        \vspace{0.12cm}
+        \textbf{Goal of FOL:} write compact rules that generalize to many entities.
+\end{frame}
+
+\begin{frame}{First-Order Logic (FOL) (2/2): Building Blocks}
+        FOL adds structure using these elements:
+        \begin{itemize}
+                \item \textbf{Constants:} Ali, London, DrSmith
+                \item \textbf{Variables:} $x, y, z$
+                \item \textbf{Predicates:} $Doctor(x)$, $Treats(x,y)$
+                \item \textbf{Quantifiers:} $\forall$ (for all), $\exists$ (there exists)
+        \end{itemize}
+
+        \vspace{0.12cm}
+        Example rule:
+        \[
+            \forall p\; (Patient(p) \land HasFever(p) \Rightarrow NeedsRest(p))
+        \]
+
+        \vspace{0.08cm}
+        One sentence applies to every patient.
+\end{frame}
+
+\begin{frame}{FOL Example (1/2): Book-Style}
+        \textbf{Classic example:}
+        \[
+            \forall x\; (Human(x) \Rightarrow Mortal(x))
+        \]
+        \[
+            Human(Socrates)
+        \]
+
+        \vspace{0.1cm}
+        Therefore:
+        \[
+            Mortal(Socrates)
+        \]
+
+        \vspace{0.1cm}
+        This is: apply a general rule to one specific object.
+\end{frame}
+
+\begin{frame}{FOL Example (2/2): Real-World}
+        \textbf{Healthcare rule:}
+        \[
+            \forall p\; (HasFlu(p) \Rightarrow NeedsRest(p))
+        \]
+        \[
+            HasFlu(Ali)
+        \]
+
+        \vspace{0.1cm}
+        Therefore:
+        \[
+            NeedsRest(Ali)
+        \]
+
+        \vspace{0.12cm}
+        \textbf{Takeaway:} same pattern as Socrates, but now in a practical domain.
+\end{frame}
+
+\begin{frame}{Unification (1/2): Intuition}
+        \textbf{Unification} means:
+        find substitutions that make two expressions match.
+
+        \vspace{0.12cm}
+        Example:
+        \[
+            Treats(DrSmith, x) \quad \text{and} \quad Treats(DrSmith, Sam)
+        \]
+        Unifier:
+        \[
+            \theta = \{x/Sam\}
+        \]
+
+        \vspace{0.12cm}
+        After substitution, both expressions are identical.
+\end{frame}
+
+\begin{frame}{Unification (2/2): Success and Failure}
+        \textbf{Success:}
+        \[
+            Knows(x,y),\; Knows(Alice,Bob)
+            \Rightarrow \theta = \{x/Alice,\; y/Bob\}
+        \]
+
+        \vspace{0.1cm}
+        \textbf{Failure:}
+        \[
+            Treats(DrSmith,Sam),\; Treats(DrJones,Sam)
+        \]
+        cannot unify because $DrSmith \neq DrJones$.
+
+        \vspace{0.1cm}
+        \textbf{Why important:}
+        \begin{itemize}
+                \item backward chaining,
+                \item resolution,
+                \item Prolog-style rule matching.
+        \end{itemize}
+\end{frame}
+
+\section{Inference in Knowledge Systems}
+
+\begin{frame}{Inference: Big Picture}
+    Inference answers: \textit{What new facts follow from what we already know?}
+
+    \vspace{0.2cm}
+    Desirable properties:
+    \begin{itemize}
+        \item \textbf{Soundness:} never derive false conclusions.
+        \item \textbf{Completeness:} derive every true entailed conclusion (within logic limits).
+        \item \textbf{Efficiency:} finish in practical time.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Forward vs Backward Chaining}
+    \begin{columns}[T,onlytextwidth]
+        \column{0.48\textwidth}
+        \alert{Forward Chaining}
+        \begin{itemize}
+            \item Data-driven
+            \item Fire rules from known facts
+            \item Good for streaming/event systems
+        \end{itemize}
+
+        \column{0.48\textwidth}
+        \alert{Backward Chaining}
+        \begin{itemize}
+            \item Goal-driven
+            \item Start from query, prove prerequisites
+            \item Good for diagnosis/query answering
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Resolution (Conceptual)}
+    Resolution works by contradiction:
+    \begin{enumerate}
+        \item Convert $KB$ and $\neg Query$ into CNF clauses.
+        \item Repeatedly resolve complementary literals.
+        \item Derive empty clause to prove entailment.
+    \end{enumerate}
+    \vspace{0.2cm}
+    Why useful:
+    \begin{itemize}
+        \item Uniform rule for automated theorem proving.
+        \item Foundation for many symbolic reasoners.
+    \end{itemize}
+\end{frame}
+
+\section{Rules, Semantic Networks, Ontologies}
+
+\begin{frame}{Production Rules}
+    Rules encode procedural domain knowledge:
+    \[
+      \text{IF condition THEN conclusion/action}
+    \]
+    \vspace{0.2cm}
+    Example (e-commerce):
+    \begin{itemize}
+        \item IF customer is premium AND cart value $>$ 500 THEN shipping = free.
+        \item IF payment fails 3 times THEN flag transaction.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Rule-Based System Architecture}
+    \begin{itemize}
+        \item \textbf{Knowledge Base:} facts + rules.
+        \item \textbf{Working Memory:} current case-specific facts.
+        \item \textbf{Inference Engine:} chooses and applies rules.
+        \item \textbf{Explanation Layer:} why a decision was reached.
+    \end{itemize}
+    \vspace{0.2cm}
+    \textit{Strength: interpretable decisions. Limitation: rule maintenance can grow hard at scale.}
+\end{frame}
+
+\begin{frame}{Semantic Networks (Graph View of Knowledge)}
+    \begin{itemize}
+        \item Nodes represent concepts/instances.
+        \item Edges represent relations: \texttt{is-a}, \texttt{part-of}, \texttt{causes}, etc.
+        \item Supports inheritance-like reasoning.
+    \end{itemize}
+    \vspace{0.2cm}
+    Example:
+    \begin{itemize}
+        \item \texttt{Bird is-a Animal}
+        \item \texttt{Canary is-a Bird}
+        \item infer: \texttt{Canary is-a Animal}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Logic vs Rules vs Semantic Nets}
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \renewcommand{\arraystretch}{1.13}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.5cm} *{3}{>{\raggedright\arraybackslash}X}}
+        \toprule
+        \textbf{Approach} & \textbf{Main Strength} & \textbf{Typical Use} & \textbf{Main Limitation} \\
+        \midrule
+        Logic (PL/FOL) & Precise semantics & Formal reasoning, verification & Can become computationally heavy \\
+        Production Rules & Simple expert knowledge encoding & Policy, diagnosis, decision support & Rule explosion/conflicts \\
+        Semantic Networks & Intuitive relationship structure & Taxonomies, concept maps, explainability & Semantics can be less strict \\
+        \bottomrule
+    \end{tabularx}
+\end{frame}
+
+\begin{frame}{Ontologies: Basic Idea}
+    Ontology = explicit conceptual model of a domain:
+    \begin{itemize}
+        \item \textbf{Classes:} Patient, Disease, Medication
+        \item \textbf{Relations:} hasSymptom, treatedBy, contraindicatedWith
+        \item \textbf{Instances:} specific entities (e.g., Patient\_102)
+    \end{itemize}
+    \vspace{0.2cm}
+    Purpose:
+    \begin{itemize}
+        \item Shared vocabulary across teams/systems.
+        \item Better interoperability and data integration.
+    \end{itemize}
+\end{frame}
+
+\section{Putting It Together}
+
+\begin{frame}{End-to-End KR Pipeline (Practical)}
+    \begin{enumerate}
+        \item Define domain concepts and relations.
+        \item Choose representation (logic/rules/net/ontology blend).
+        \item Encode facts and rules.
+        \item Select inference strategy.
+        \item Validate outputs with domain experts.
+        \item Iterate as domain evolves.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Common Pitfalls in KR Projects}
+    \begin{itemize}
+        \item \textbf{Over-modeling:} too much detail too early.
+        \item \textbf{Ambiguous predicates:} unclear symbol meaning.
+        \item \textbf{Hidden assumptions:} not encoded explicitly.
+        \item \textbf{No governance:} rules drift and become inconsistent.
+    \end{itemize}
+    \vspace{0.2cm}
+    Mitigation: naming conventions, review cycles, test queries, and versioning.
+\end{frame}
+
+\section{Assessment and Wrap-Up}
+
+\begin{frame}{Assessment Q1 (Conceptual)}
+    \textbf{Question:} Why is "representation" as important as the inference algorithm?
+
+    \vspace{0.2cm}
+    \textbf{Expected discussion points:}
+    \begin{itemize}
+        \item It determines what can be expressed.
+        \item It constrains what can be inferred efficiently.
+        \item Poor representation can make good inference unusable.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Assessment Q2 (Logic Modeling)}
+    Convert to propositional statements and infer:
+    \begin{itemize}
+        \item If server overload then alert admin.
+        \item If alert admin then open incident ticket.
+        \item Server overload occurred.
+    \end{itemize}
+    \vspace{0.2cm}
+    \textbf{Ask students:} What follows logically? What does not necessarily follow?
+\end{frame}
+
+\begin{frame}{Assessment Q3 (FOL Modeling)}
+    \textbf{Task:} Write FOL for:
+    \begin{itemize}
+        \item Every student in this course has an ID.
+        \item Riya is a student in this course.
+    \end{itemize}
+    \vspace{0.2cm}
+    Then ask: what can be concluded about Riya?
+\end{frame}
+
+\begin{frame}{Assessment Q4 (Inference Strategy)}
+    A doctor asks: \textit{"Does patient P likely have condition C?"}
+
+    \vspace{0.2cm}
+    \textbf{Prompt:}
+    \begin{itemize}
+        \item Which is more natural first: forward chaining or backward chaining?
+        \item Why?
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Assessment Q5 (Representation Choice)}
+    For a university knowledge system (courses, prerequisites, instructors, departments):
+    \begin{itemize}
+        \item What would you store as rules?
+        \item What would you store as ontology classes/relations?
+        \item Where would semantic network visualization help stakeholders?
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Key Takeaways}
+    \begin{enumerate}
+        \item Knowledge representation and inference are inseparable in AI design.
+        \item Propositional logic gives clean foundations; FOL adds object-level expressiveness.
+        \item Chaining and resolution provide complementary inference perspectives.
+        \item Rules, semantic nets, and ontologies serve different engineering needs.
+        \item Real systems often combine these representations, not just one.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}[standout]
+    Questions?
+\end{frame}
+
+\end{document}

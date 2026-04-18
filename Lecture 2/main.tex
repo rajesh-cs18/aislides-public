@@ -1,0 +1,378 @@
+\documentclass[10pt]{beamer}
+
+% --- Modern Theme ---
+\usetheme{metropolis}
+\usecolortheme{default}
+\setbeamercolor{background canvas}{bg=white}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[scale=2]{ccicons}
+\usepackage{pgfplots}
+\usepgfplotslibrary{dateplot}
+\usepackage{xspace}
+
+% --- Title Information ---
+\title{Foundations of Artificial Intelligence}
+\subtitle{Part II: Problem Solving and Search}
+\institute{Department of Computer Science}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}{Lecture Roadmap}
+    \setbeamertemplate{section in toc}[sections numbered]
+    \tableofcontents[hideallsubsections]
+\end{frame}
+
+\begin{frame}{Learning Objectives}
+    By the end of this lecture, you should be able to:
+    \begin{itemize}
+        \item Formulate an AI task as a search problem over a state space.
+        \item Compare uninformed strategies: BFS, DFS, and Uniform-Cost Search.
+        \item Explain informed search with Greedy Best-First and A*.
+        \item Use heuristic properties (admissibility and consistency) to reason about optimality.
+        \item Choose a strategy based on completeness, optimality, time, and space trade-offs.
+    \end{itemize}
+\end{frame}
+
+\section{From Problem Formulation to Search}
+
+\begin{frame}{Why Search Matters in AI}
+    Problem-solving agents follow a simple loop:
+    \begin{center}
+        \fbox{Formulate $\rightarrow$ Search $\rightarrow$ Execute}
+    \end{center}
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item \textbf{Formulate:} Convert the task into states, actions, and goals.
+        \item \textbf{Search:} Find an action sequence from initial state to a goal state.
+        \item \textbf{Execute:} Apply the sequence in the environment.
+    \end{itemize}
+    \vspace{0.2cm}
+    \textit{Core idea from the book: intelligence emerges from representation + algorithm.}
+\end{frame}
+
+\begin{frame}{State Space Representation}
+    A search problem is specified as:
+    \[
+        \langle S, A, s_0, G, c \rangle
+    \]
+    \begin{itemize}
+        \item $S$: set of states.
+        \item $A(s)$: actions available in state $s$.
+        \item $s_0$: initial state.
+        \item $G$: goal test or set of goal states.
+        \item $c(s,a,s')$: step cost function.
+    \end{itemize}
+    \vspace{0.2cm}
+    A solution is a path from $s_0$ to a goal; an \textbf{optimal} solution has minimum total path cost.
+\end{frame}
+
+\begin{frame}{Search Tree vs State Graph}
+    \begin{columns}[T,onlytextwidth]
+        \column{0.48\textwidth}
+            \alert{Search Tree View}
+            \begin{itemize}
+                \item Nodes are paths.
+                \item Same state may appear many times.
+                \item Can become infinite with loops.
+            \end{itemize}
+        \column{0.48\textwidth}
+            \alert{State Graph View}
+            \begin{itemize}
+                \item Nodes are unique states.
+                \item Graph-search tracks visited states.
+                \item Usually reduces repeated work.
+            \end{itemize}
+    \end{columns}
+    \vspace{0.3cm}
+    \textbf{Practical rule:} Prefer graph search unless memory constraints are severe.
+\end{frame}
+
+\begin{frame}{Running Example: Route Finding}
+    \small
+    \begin{tabular}{p{2.4cm}p{7.9cm}}
+        \toprule
+        \textbf{Component} & \textbf{Example} \\
+        \midrule
+        States & Cities on a map \\
+        Actions & Drive to an adjacent city \\
+        Initial state & Milan \\
+        Goal test & Reach Rome \\
+        Step cost & Road distance in km \\
+        \bottomrule
+    \end{tabular}
+    \vspace{0.2cm}
+
+
+    This classic setup lets us compare BFS, DFS, Uniform-Cost, Greedy, and A* on the same problem.
+\end{frame}
+
+\section{Uninformed Search}
+
+\begin{frame}{Uninformed Search: What It Knows}
+    Uninformed (blind) search uses only:
+    \begin{itemize}
+        \item successor function,
+        \item goal test,
+        \item path cost definition (if relevant).
+    \end{itemize}
+    \vspace{0.2cm}
+    It has no estimate of how close a state is to the goal.
+
+    \vspace{0.2cm}
+    \textbf{Main strategies in this lecture:}
+    \begin{itemize}
+        \item Breadth-First Search (BFS)
+        \item Depth-First Search (DFS)
+        \item Uniform-Cost Search (UCS)
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Breadth-First Search (BFS)}
+    \begin{itemize}
+        \item Expands shallowest frontier node first (FIFO queue).
+        \item Complete if branching factor is finite.
+        \item Optimal when all step costs are equal.
+    \end{itemize}
+    \vspace{0.2cm}
+    Typical complexity (tree view):
+    \[
+        \text{Time } = O(b^d), \quad \text{Space } = O(b^d)
+    \]
+    where $b$ is branching factor and $d$ is depth of shallowest goal.
+
+    \vspace{0.2cm}
+    \alert{Strength:} Reliable shallow solution.
+    \hfill
+    \alert{Weakness:} Very high memory use.
+\end{frame}
+
+\begin{frame}{Depth-First Search (DFS)}
+    \begin{itemize}
+        \item Expands deepest frontier node first (stack or recursion).
+        \item Space-efficient because it stores one path plus siblings.
+        \item Not optimal; can be incomplete in infinite-depth spaces.
+    \end{itemize}
+    \vspace{0.2cm}
+    Typical complexity (tree view):
+    \[
+        \text{Time } = O(b^m), \quad \text{Space } = O(bm)
+    \]
+    where $m$ is maximum depth.
+
+    \vspace{0.2cm}
+    \alert{Strength:} Low memory footprint.
+    \hfill
+    \alert{Weakness:} Can go deep in wrong direction.
+\end{frame}
+
+\begin{frame}{Uniform-Cost Search (UCS)}
+    \begin{itemize}
+        \item Expands node with smallest path cost $g(n)$ first.
+        \item Implemented with a priority queue.
+        \item Equivalent to Dijkstra-style expansion on positive-cost edges.
+    \end{itemize}
+    \vspace{0.2cm}
+    Guarantees:
+    \begin{itemize}
+        \item Complete if each step cost is at least some $\epsilon > 0$.
+        \item Optimal for general nonnegative step costs.
+    \end{itemize}
+    \vspace{0.2cm}
+    \textit{Key difference from BFS: UCS optimizes path cost, not depth.}
+\end{frame}
+
+\begin{frame}{Uninformed Strategy Comparison}
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \renewcommand{\arraystretch}{1.12}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.1cm} *{4}{>{\raggedright\arraybackslash}X}}
+        \toprule
+        \textbf{Strategy} & \textbf{Complete?} & \textbf{Optimal?} & \textbf{Time} & \textbf{Space} \\
+        \midrule
+        BFS & Yes (finite $b$) & Yes (equal costs) & Exponential in $d$ & Exponential in $d$ \\
+        DFS & No (infinite depth) & No & Exponential in $m$ & Linear in depth \\
+        UCS & Yes ($c \geq \epsilon$) & Yes & Exponential in $C^*/\epsilon$ & Similar to time \\
+        \bottomrule
+    \end{tabularx}
+\end{frame}
+
+\section{Informed Search}
+
+\begin{frame}{From Blind to Informed Search}
+    Informed search adds a heuristic estimate:
+    \[
+        h(n) \approx \text{estimated cost from } n \text{ to a goal}
+    \]
+    \vspace{0.2cm}
+    Better estimates usually mean fewer expansions.
+
+    \vspace{0.2cm}
+    Two central strategies:
+    \begin{itemize}
+        \item \textbf{Greedy Best-First:} expand smallest $h(n)$.
+        \item \textbf{A*:} expand smallest $f(n)=g(n)+h(n)$.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Greedy Best-First Search}
+    \begin{itemize}
+        \item Chooses node that appears closest to goal by $h(n)$.
+        \item Often very fast with good heuristics.
+        \item Can be misled into long or costly detours.
+    \end{itemize}
+    \vspace{0.2cm}
+    Evaluation:
+    \[
+        f(n)=h(n)
+    \]
+    \vspace{0.2cm}
+    \alert{Not generally optimal.}
+    \hfill
+    \alert{Not always complete in graph variants without safeguards.}
+\end{frame}
+
+\begin{frame}{A* Search}
+    A* balances cost-so-far and estimated cost-to-go:
+    \[
+        f(n)=g(n)+h(n)
+    \]
+    \begin{itemize}
+        \item $g(n)$: exact path cost from start to $n$.
+        \item $h(n)$: heuristic estimate from $n$ to goal.
+    \end{itemize}
+    \vspace{0.2cm}
+    Intuition:
+    \begin{itemize}
+        \item Greedy alone over-trusts $h$.
+        \item UCS alone ignores goal direction.
+        \item A* combines both signals.
+    \end{itemize}
+\end{frame}
+
+\section{Heuristics and Optimality}
+
+\begin{frame}{Heuristic Quality Conditions}
+    \textbf{Admissible heuristic:}
+    \[
+        0 \le h(n) \le h^*(n)
+    \]
+    It never overestimates true remaining cost $h^*(n)$.
+
+    \vspace{0.25cm}
+    \textbf{Consistent heuristic (monotone):}
+    \[
+        h(n) \le c(n,a,n') + h(n')
+    \]
+    for every edge $(n,a,n')$.
+
+    \vspace{0.25cm}
+    Consistency implies admissibility (with $h(\text{goal})=0$) and gives nondecreasing $f$-values along paths.
+\end{frame}
+
+\begin{frame}{When Is A* Optimal?}
+    For tree search, A* is optimal if $h$ is admissible.
+
+    \vspace{0.25cm}
+    For graph search, A* is optimal with a consistent heuristic and proper closed-list handling.
+
+    \vspace{0.25cm}
+    Why (high-level):
+    \begin{enumerate}
+        \item A* always expands the node with smallest $f$.
+        \item For admissible $h$, $f(n)$ never overestimates best solution through $n$.
+        \item Therefore, the first goal removed from frontier has cost $C^*$.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Designing Heuristics in Practice}
+    Reliable methods:
+    \begin{itemize}
+        \item \textbf{Relaxed problems:} remove constraints and solve easier version.
+        \item \textbf{Abstractions:} compress state description while preserving lower bounds.
+        \item \textbf{Pattern databases:} precompute exact costs for abstract subproblems.
+    \end{itemize}
+    \vspace{0.2cm}
+    Quality trade-off:
+    \[
+        \text{more accurate } h \Rightarrow \text{fewer expansions, often more computation per node}
+    \]
+\end{frame}
+
+\begin{frame}{Example Heuristic: Straight-Line Distance}
+    In route planning, let $h(n)$ be straight-line distance to destination.
+    \begin{itemize}
+        \item Usually admissible: roads cannot be shorter than straight-line geometry.
+        \item Often consistent due to triangle inequality.
+    \end{itemize}
+    \vspace{0.2cm}
+    Result:
+    \begin{itemize}
+        \item Greedy becomes fast but may pick costly routes.
+        \item A* with this heuristic is both efficient and optimal (under assumptions above).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Common Pitfalls and Fixes}
+    \begin{itemize}
+        \item \textbf{Pitfall:} Confusing state with node/path record.
+        \item \textbf{Fix:} Track parent, action, and path cost per node explicitly.
+
+        \item \textbf{Pitfall:} Using heuristic that overestimates and expecting optimality.
+        \item \textbf{Fix:} Validate admissibility/consistency on representative transitions.
+
+        \item \textbf{Pitfall:} Ignoring repeated states.
+        \item \textbf{Fix:} Use graph-search with reached/closed set and best-cost updates.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{From Search to Algorithmic Intelligence}
+    Why this topic is foundational:
+    \begin{itemize}
+        \item You model the world as formal states and transitions.
+        \item You reason about guarantees: completeness and optimality.
+        \item You make principled trade-offs: speed, memory, and solution quality.
+        \item You design heuristics that inject domain knowledge into generic algorithms.
+    \end{itemize}
+    \vspace{0.2cm}
+    \textit{This is where intelligent behavior becomes an engineering discipline.}
+\end{frame}
+
+\begin{frame}{Key Takeaways}
+    \begin{enumerate}
+        \item State-space representation determines what search can do.
+        \item BFS, DFS, and UCS differ mainly in frontier ordering and guarantees.
+        \item Greedy is goal-directed but not reliably optimal.
+        \item A* is optimal with admissible/consistent heuristics and correct graph handling.
+        \item Better heuristics can drastically reduce search effort.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Reference Reading for This Part}
+    \begin{itemize}
+        \item \textbf{Russell \& Norvig (3rd/4th ed.):} Problem-solving and search chapters.
+        \item Focus sections: problem formulation, tree/graph search, uninformed and informed search, heuristic properties.
+    \end{itemize}
+    \vspace{0.25cm}
+    Suggested self-check:
+    \begin{enumerate}
+        \item Can you write $\langle S, A, s_0, G, c \rangle$ for a new domain?
+        \item Can you justify whether a heuristic is admissible?
+        \item Can you predict whether an algorithm is complete/optimal in that domain?
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}[standout]
+    Questions?
+\end{frame}
+
+\end{document}

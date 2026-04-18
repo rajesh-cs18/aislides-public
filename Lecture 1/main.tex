@@ -1,0 +1,263 @@
+\documentclass[10pt]{beamer}
+
+% --- Modern Theme ---
+\usetheme{metropolis}           % A very modern, clean theme
+\usecolortheme{default}
+\setbeamercolor{background canvas}{bg=white}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage[scale=2]{ccicons}
+\usepackage{pgfplots}
+\usepgfplotslibrary{dateplot}
+\usepackage{xspace}
+
+% --- Title Information ---
+\title{Foundations of Artificial Intelligence}
+\subtitle{Part I: Introduction \& Intelligent Agents}
+\institute{Department of Computer Science}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}{Lecture Roadmap}
+    \setbeamertemplate{section in toc}[sections numbered]
+    \tableofcontents[hideallsubsections]
+\end{frame}
+
+\begin{frame}{Learning Objectives}
+    By the end of this lecture, you should be able to:
+    \begin{itemize}
+        \item Distinguish the four classic definitions of AI.
+        \item Explain why the \textbf{rational agent} view is central in modern AI.
+        \item Specify a task using \textbf{PEAS} with concrete metrics.
+        \item Classify environments (observable, Random, sequential, etc.).
+        \item Choose an appropriate agent structure for a given problem.
+    \end{itemize}
+\end{frame}
+
+% --- SECTION 1: INTRODUCTION ---
+\section{Chapter 1: Defining the Field}
+
+\begin{frame}{What is Artificial Intelligence?}
+    AI is historically viewed through four distinct lenses:
+    \vspace{0.4cm}
+    \begin{columns}[T,onlytextwidth]
+        \column{0.45\textwidth}
+            \alert{Human-Centric}
+            \begin{itemize}
+                \item \textbf{Thinking Humanly:} Cognitive modeling.
+                \item \textbf{Acting Humanly:} The Turing Test.
+            \end{itemize}
+        \column{0.45\textwidth}
+            \alert{Rationality-Centric}
+            \begin{itemize}
+                \item \textbf{Thinking Rationally:} Laws of thought (Logic).
+                \item \textbf{Acting Rationally:} The Rational Agent.
+            \end{itemize}
+    \end{columns}
+    \vspace{0.5cm}
+    \textit{This course focuses on the Rational Agent approach: acting to achieve the best outcome.}
+\end{frame}
+
+\begin{frame}{Four Views of AI: Strengths and Limits}
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.7cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+        \toprule
+        \textbf{View} & \textbf{Main Idea} & \textbf{Typical Limitation} \\
+        \midrule
+        Thinking Humanly & Match human cognitive processes & Hard to validate internal thought processes \\
+        Acting Humanly & Indistinguishable behavior from humans & Human-like behavior is not always optimal \\
+        Thinking Rationally & Derive correct conclusions via logic & Real-world knowledge is incomplete/uncertain \\
+        Acting Rationally & Select actions that maximize expected performance & Requires modeling uncertainty and trade-offs \\
+        \bottomrule
+    \end{tabularx}
+\end{frame}
+
+\begin{frame}{A Brief Historical Arc of AI}
+    \begin{itemize}
+        \item \textbf{1950s--1960s:} Symbolic AI and early optimism.
+        \item \textbf{1970s--1980s:} Knowledge-based systems and expert systems.
+        \item \textbf{1990s--2000s:} Probabilistic reasoning and machine learning become central.
+        \item \textbf{2010s--Today:} Deep learning, foundation models, and hybrid systems.
+    \end{itemize}
+    \vspace{0.3cm}
+    \textit{Book takeaway: progress accelerates when representation, learning, and computation improve together.}
+\end{frame}
+
+\begin{frame}{The Foundations of AI}
+    AI is a "synthetic" discipline, drawing from:
+    \begin{itemize}
+        \item \textbf{Mathematics:} Probability (uncertainty) and Logic (certainty).
+        \item \textbf{Economics:} Decision theory and utility maximization.
+        \item \textbf{Neuroscience:} Hardware for intelligence (biological).
+        \item \textbf{Control Theory:} Designing systems that maximize an objective function over time.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Reference Reading for This Part}
+    \begin{itemize}
+        \item \textbf{Russell \& Norvig (4th ed.):} Chapter 1 (Introduction), Chapter 2 (Intelligent Agents).
+        \item \textbf{Poole \& Mackworth (3rd ed.):} Chapters on agents, environments, and problem formulation.
+    \end{itemize}
+    \vspace{0.3cm}
+    Suggested strategy:
+    \begin{enumerate}
+        \item Read definitions first (AI views, rationality, PEAS).
+        \item Then map each definition to one practical example.
+        \item Finally, compare which assumptions break in real-world settings.
+    \end{enumerate}
+\end{frame}
+
+% --- SECTION 2: INTELLIGENT AGENTS ---
+\section{Chapter 2: The Agent Framework}
+
+\begin{frame}{The Agent-Environment Interaction}
+    An \textbf{Agent} is anything that:
+    \begin{enumerate}
+        \item Perceives its \textbf{Environment} through \textbf{Sensors}.
+        \item Acts upon that environment through \textbf{Actuators}.
+    \end{enumerate}
+    \vspace{0.3cm}
+    \begin{center}
+        \fbox{Percepts $\rightarrow$ [ Agent Function ] $\rightarrow$ Actions}
+    \end{center}
+    \vspace{0.3cm}
+    \textbf{Agent Program:} The concrete implementation of the mathematical Agent Function.
+\end{frame}
+
+\begin{frame}{Formal Agent Definition}
+    Let:
+    \begin{itemize}
+        \item $\mathcal{P}$ be the set of possible percepts,
+        \item $\mathcal{A}$ be the set of possible actions.
+    \end{itemize}
+    Then an agent function is:
+    \[
+        f: \mathcal{P}^{*} \rightarrow \mathcal{A}
+    \]
+    \vspace{0.2cm}
+    Interpretation:
+    \begin{itemize}
+        \item Input: entire percept history.
+        \item Output: next action.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Designing for Success: PEAS}
+    Before writing code, we must specify the \textbf{PEAS} for the task:
+    \begin{description}
+        \item[Performance] The metric for success (e.g., safety, speed, profit).
+        \item[Environment] The "world" (e.g., city streets, a chessboard).
+        \item[Actuators] The tools for action (e.g., steering wheel, display).
+        \item[Sensors] The inputs (e.g., cameras, keyboard, GPS).
+    \end{description}
+\end{frame}
+
+\begin{frame}{PEAS Example: Autonomous Taxi}
+    \small
+    \begin{tabular}{p{2.2cm}p{8.1cm}}
+        \toprule
+        \textbf{Component} & \textbf{Example Specification} \\
+        \midrule
+        Performance & Safety, legality, trip time, passenger comfort, energy efficiency \\
+        Environment & Urban/suburban roads, pedestrians, weather, traffic rules, other drivers \\
+        Actuators & Steering, throttle, brake, indicators, display, audio prompts \\
+        Sensors & Cameras, LiDAR, radar, GPS, IMU, wheel encoders, microphone \\
+        \bottomrule
+    \end{tabular}
+\end{frame}
+
+\begin{frame}{PEAS Example: Medical Diagnosis Assistant}
+    \small
+    \begin{tabular}{p{2.2cm}p{8.1cm}}
+        \toprule
+        \textbf{Component} & \textbf{Example Specification} \\
+        \midrule
+        Performance & Diagnostic accuracy, calibration, turnaround time, patient safety \\
+        Environment & Hospital workflow, EHR systems, lab pipelines, changing clinical guidelines \\
+        Actuators & Ranked differential list, recommendations, alerts, report generation \\
+        Sensors & Symptoms, vitals, labs, imaging reports, history, clinician feedback \\
+        \bottomrule
+    \end{tabular}
+\end{frame}
+
+\begin{frame}{Task Environment Properties}
+    The difficulty of an AI problem is defined by its environment:
+    \begin{itemize}
+        \item \textbf{Observable:} Fully vs. Partially (Can we see everything?).
+        \item \textbf{Deterministic:} vs. Random (Is the next state predictable?).
+        \item \textbf{Episodic:} vs. Sequential (Do current actions affect the future?).
+        \item \textbf{Static:} vs. Dynamic (Does the world change while we think?).
+        \item \textbf{Discrete:} vs. Continuous (Chess vs. Driving).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Environment Classification by Example}
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \renewcommand{\arraystretch}{1.12}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.5cm} *{4}{>{\raggedright\arraybackslash}X}}
+        \toprule
+        \textbf{Task} & \textbf{Observability} & \textbf{Dynamics} & \textbf{Outcome Model} & \textbf{State Type} \\
+        \midrule
+        Chess & Fully observable & Static (turn-based) & Mostly deterministic & Discrete \\
+        Poker & Partially observable & Static (turn-based) & Random (hidden cards) & Discrete \\
+        Robot vacuum & Partially observable & Dynamic & Random & Hybrid \\
+        Highway driving & Partially observable & Dynamic & Random & Continuous \\
+        \bottomrule
+    \end{tabularx}
+\end{frame}
+
+\begin{frame}{The Hierarchy of Agent Structures}
+    Modern AI agents are categorized by their complexity:
+    \begin{itemize}
+        \item \textbf{Simple Reflex:} Action based only on current percept.
+        \item \textbf{Model-Based:} Maintains internal state to track the "unseen."
+        \item \textbf{Goal-Based:} Acts to reach a specific destination or state.
+        \item \textbf{Utility-Based:} Acts to maximize "happiness" (useful for trade-offs).
+        \item \textbf{Learning Agents:} Can improve their performance over time.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{When to Choose Each Agent Type}
+    \begin{itemize}
+        \item \textbf{Simple Reflex:} Use when environments are fully observable and rules are stable.
+        \item \textbf{Model-Based:} Use when some state is hidden and must be inferred.
+        \item \textbf{Goal-Based:} Use when planning to a target state is required.
+        \item \textbf{Utility-Based:} Use when multiple goals conflict and trade-offs matter.
+        \item \textbf{Learning Agent:} Use when environment is complex, non-stationary, or hard-coded rules fail.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Learning Agent Architecture (Conceptual)}
+    A standard learning agent can be decomposed into:
+    \begin{itemize}
+        \item \textbf{Performance Element:} Chooses external actions.
+        \item \textbf{Learning Element:} Improves the performance element from experience.
+        \item \textbf{Critic:} Evaluates behavior against the performance measure.
+        \item \textbf{Problem Generator:} Proposes exploratory actions to gather informative experience.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Key Takeaways}
+    \begin{enumerate}
+        \item Rationality is about \textbf{expected performance}, not perfect outcomes.
+        \item PEAS is the first engineering step before implementation.
+        \item Environment properties determine algorithmic difficulty.
+        \item Agent architecture should match uncertainty, goals, and learning needs.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}[standout]
+    Questions?
+\end{frame}
+
+\end{document}

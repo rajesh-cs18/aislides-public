@@ -1,0 +1,73 @@
+\documentclass[11pt]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{titlesec}
+\usepackage{hyperref}
+
+% --- Custom Header ---
+\titleformat{\section}{\large\bfseries}{}{0em}{}[\titlerule]
+
+\begin{document}
+
+\begin{center}
+    {\huge \textbf{Assignment 1: AI System Specification}} \\
+    \vspace{0.2cm}
+    {\large \textbf{Course:} Introduction to Artificial Intelligence} \\
+    \textbf{Topic:} PEAS Framework and Task Environment Analysis \\
+    \vspace{0.5cm}
+\end{center}
+
+\section{Objectives}
+The goal of this assignment is to apply the formal frameworks from \textit{Russell \& Norvig (Chapter 2)} to a real-world problem. You will demonstrate your ability to specify success metrics and classify the complexity of an AI's operational environment.
+
+\section{Task Description}
+Select \textbf{one} of the following modern AI applications (or propose one for approval):
+\begin{itemize}[noitemsep]
+    \item \textbf{A:} An Automated Warehouse Sorting Robot (e.g., Amazon Robotics).
+    \item \textbf{B:} A Personalized News Feed Recommender (e.g., Twitter/X or TikTok algorithm).
+    \item \textbf{C:} An Agricultural Monitoring Drone for crop disease detection.
+\end{itemize}
+
+\vspace{0.3cm}
+\noindent For your chosen system, complete the following three tasks:
+
+\section{Task 1: PEAS Specification}
+Define the \textbf{PEAS} framework for your agent. Ensure your descriptions are specific (e.g., do not just say "Cameras," specify "High-resolution RGB and Infrared sensors").
+
+\begin{description}
+    \item[Performance Measure:] How exactly is success measured? List at least four metrics.
+    \item[Environment:] Where does the agent act? What are the key external factors?
+    \item[Actuators:] What physical or digital tools does the agent use to change its world?
+    \item[Sensors:] What are the inputs the agent uses to perceive its state?
+\end{description}
+
+\section{Task 2: Environment Classification}
+Classify the task environment according to the following dimensions. For each, provide a \textbf{one-sentence justification} explaining your choice.
+\begin{itemize}
+    \item Fully Observable vs. Partially Observable
+    \item Single-agent vs. Multi-agent
+    \item Deterministic vs. Stochastic
+    \item Episodic vs. Sequential
+    \item Static vs. Dynamic
+    \item Discrete vs. Continuous
+\end{itemize}
+
+\section{Task 3: Critical Analysis}
+Answer the following questions in short-paragraph format:
+\begin{enumerate}
+    \item Which of the six dimensions mentioned in Task 2 poses the \textbf{greatest technical challenge} for an AI engineer building this system? Why?
+    \item Propose one \textbf{Utility Function} that would help the agent handle a trade-off (e.g., Speed vs. Safety). How would the agent's behavior change if the weight of this utility was doubled?
+\end{enumerate}
+
+\section{Submission Guidelines}
+\begin{itemize}
+    \item Submit your response as a single \textbf{PDF} file via email.
+    \item Format: 12pt font, maximum 2 pages.
+    \item Academic Integrity: All justifications must be your own. Use of AI for formatting is allowed, but the design logic must be original.
+\end{itemize}
+
+\end{document}
