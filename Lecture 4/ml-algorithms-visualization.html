@@ -1,0 +1,894 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ML Algorithms Interactive Visualizations</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --ink: #1b2432;
+      --muted: #5e6b82;
+      --line: #d8e0ef;
+      --accent: #0f766e;
+      --blue: #2563eb;
+      --orange: #ea580c;
+      --green: #16a34a;
+      --red: #dc2626;
+      --shadow: 0 10px 24px rgba(27, 36, 50, 0.09);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 8%, #e7f7f3 0 18%, transparent 30%),
+        radial-gradient(circle at 92% 10%, #e8eeff 0 18%, transparent 30%),
+        var(--bg);
+      padding: 22px;
+    }
+
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid #e5ebf6;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.3rem;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+    }
+
+    .sub {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .tab-btn {
+      border: 1px solid #cdd7ea;
+      border-radius: 999px;
+      background: #fff;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .panel {
+      display: none;
+      grid-template-columns: 300px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .panel.active {
+      display: grid;
+    }
+
+    .controls {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fbfdff;
+      padding: 12px;
+    }
+
+    .control {
+      margin-bottom: 10px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: #334155;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    input[type="range"],
+    select,
+    button {
+      width: 100%;
+    }
+
+    input[type="range"] {
+      accent-color: var(--accent);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    button {
+      border: 1px solid #cdd7ea;
+      border-radius: 10px;
+      background: #fff;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 0.88rem;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .metrics {
+      margin-top: 8px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .viz {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: linear-gradient(180deg, #fff 0, #f8fbff 100%);
+      padding: 8px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 520px;
+      display: block;
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .explain {
+      margin-top: 8px;
+      font-size: 0.87rem;
+      color: var(--muted);
+    }
+
+    .mono {
+      font-family: Menlo, Monaco, "Courier New", monospace;
+      font-size: 0.86rem;
+    }
+
+    @media (max-width: 980px) {
+      .panel,
+      .panel.active {
+        grid-template-columns: 1fr;
+      }
+
+      canvas {
+        height: 360px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card">
+      <h1>Machine Learning: Interactive Algorithm Demos</h1>
+      <p class="sub">Classroom-friendly visualizations for Linear Regression, k-NN, Decision Tree inference, and k-Means clustering.</p>
+    </section>
+
+    <section class="card">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="linreg">Linear Regression</button>
+        <button class="tab-btn" data-tab="knn">k-NN</button>
+        <button class="tab-btn" data-tab="tree">Decision Tree</button>
+        <button class="tab-btn" data-tab="kmeans">k-Means</button>
+      </div>
+
+      <div id="linreg" class="panel active">
+        <aside class="controls">
+          <h2>Linear Regression</h2>
+          <p class="sub">Move slope/intercept manually, then compare with auto-fit.</p>
+          <div class="control">
+            <label for="lrSlope">Slope (<span id="lrSlopeVal">1.00</span>)</label>
+            <input id="lrSlope" type="range" min="-2" max="2" step="0.01" value="1" />
+          </div>
+          <div class="control">
+            <label for="lrIntercept">Intercept (<span id="lrInterceptVal">0.00</span>)</label>
+            <input id="lrIntercept" type="range" min="-1.5" max="1.5" step="0.01" value="0" />
+          </div>
+          <div class="row">
+            <button id="lrData" class="primary">Generate Data</button>
+            <button id="lrFit">Auto Fit</button>
+          </div>
+          <div class="metrics" id="lrMetrics"></div>
+        </aside>
+        <div class="viz">
+          <canvas id="lrCanvas" width="820" height="520" aria-label="Linear regression visualization"></canvas>
+          <div class="explain">Blue points are training data. Orange line is your current model; dashed green line is the hidden true trend.</div>
+        </div>
+      </div>
+
+      <div id="knn" class="panel">
+        <aside class="controls">
+          <h2>k-NN</h2>
+          <p class="sub">Click on the plot to place a query point. The nearest neighbors vote.</p>
+          <div class="control">
+            <label for="knnK">k (<span id="knnKVal">5</span>)</label>
+            <input id="knnK" type="range" min="1" max="15" step="1" value="5" />
+          </div>
+          <div class="row">
+            <button id="knnData" class="primary">New Dataset</button>
+            <button id="knnClear">Clear Query</button>
+          </div>
+          <div class="metrics" id="knnMetrics"></div>
+        </aside>
+        <div class="viz">
+          <canvas id="knnCanvas" width="820" height="520" aria-label="k-NN visualization"></canvas>
+          <div class="explain">Blue and orange are known classes. Dashed links show the k nearest points used for the vote.</div>
+        </div>
+      </div>
+
+      <div id="tree" class="panel">
+        <aside class="controls">
+          <h2>Decision Tree Inference</h2>
+          <p class="sub">Pick feature values and watch the path from root to leaf.</p>
+          <div class="control">
+            <label for="outlook">Outlook</label>
+            <select id="outlook">
+              <option>Sunny</option>
+              <option>Overcast</option>
+              <option>Rain</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="humidity">Humidity</label>
+            <select id="humidity">
+              <option>High</option>
+              <option>Low</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="windy">Windy?</label>
+            <select id="windy">
+              <option>No</option>
+              <option>Yes</option>
+            </select>
+          </div>
+          <button id="treeRun" class="primary">Evaluate Path</button>
+          <div class="metrics" id="treeMetrics"></div>
+        </aside>
+        <div class="viz">
+          <canvas id="treeCanvas" width="820" height="520" aria-label="Decision tree visualization"></canvas>
+          <div class="explain">Highlighted branches show exactly why the model predicts Play or No.</div>
+        </div>
+      </div>
+
+      <div id="kmeans" class="panel">
+        <aside class="controls">
+          <h2>k-Means Clustering</h2>
+          <p class="sub">Initialize centroids, then iterate assign/update steps.</p>
+          <div class="control">
+            <label for="kmK">Clusters k (<span id="kmKVal">3</span>)</label>
+            <input id="kmK" type="range" min="2" max="6" step="1" value="3" />
+          </div>
+          <div class="row">
+            <button id="kmData" class="primary">New Points</button>
+            <button id="kmInit">Init Centroids</button>
+          </div>
+          <div class="row">
+            <button id="kmStep">Step</button>
+            <button id="kmRun">Run 10 Steps</button>
+          </div>
+          <div class="metrics" id="kmMetrics"></div>
+        </aside>
+        <div class="viz">
+          <canvas id="kmCanvas" width="820" height="520" aria-label="k-means visualization"></canvas>
+          <div class="explain">Points are colored by assigned cluster; X markers are centroids. WCSS decreases as clusters stabilize.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const TAU = Math.PI * 2;
+
+    function mapToCanvas(x, y, w, h, pad = 40) {
+      return {
+        x: pad + x * (w - pad * 2),
+        y: h - pad - y * (h - pad * 2)
+      };
+    }
+
+    function rand(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function dist(a, b) {
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function drawAxes(ctx, w, h) {
+      ctx.strokeStyle = '#dbe5f4';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 10; i++) {
+        const x = 40 + i * (w - 80) / 10;
+        const y = 40 + i * (h - 80) / 10;
+        ctx.beginPath();
+        ctx.moveTo(x, 40);
+        ctx.lineTo(x, h - 40);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(40, y);
+        ctx.lineTo(w - 40, y);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(40, h - 40);
+      ctx.lineTo(w - 40, h - 40);
+      ctx.lineTo(w - 46, h - 44);
+      ctx.moveTo(w - 40, h - 40);
+      ctx.lineTo(w - 46, h - 36);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(40, h - 40);
+      ctx.lineTo(40, 40);
+      ctx.lineTo(36, 46);
+      ctx.moveTo(40, 40);
+      ctx.lineTo(44, 46);
+      ctx.stroke();
+    }
+
+    function activateTabs() {
+      const tabs = document.querySelectorAll('.tab-btn');
+      const panels = document.querySelectorAll('.panel');
+      tabs.forEach(btn => {
+        btn.addEventListener('click', () => {
+          tabs.forEach(b => b.classList.remove('active'));
+          panels.forEach(p => p.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById(btn.dataset.tab).classList.add('active');
+        });
+      });
+    }
+
+    // ---------- Linear Regression ----------
+    const lrState = {
+      points: [],
+      trueSlope: 0.8,
+      trueIntercept: 0.1,
+      slope: 1,
+      intercept: 0
+    };
+
+    function genLRData() {
+      lrState.trueSlope = rand(0.4, 1.3);
+      lrState.trueIntercept = rand(-0.2, 0.2);
+      lrState.points = [];
+      for (let i = 0; i < 45; i++) {
+        const x = rand(0.05, 0.95);
+        const noise = rand(-0.12, 0.12);
+        const y = Math.max(0.02, Math.min(0.98, lrState.trueSlope * x + lrState.trueIntercept + noise));
+        lrState.points.push({ x, y });
+      }
+    }
+
+    function mse(slope, intercept) {
+      let sum = 0;
+      for (const p of lrState.points) {
+        const yhat = slope * p.x + intercept;
+        const e = p.y - yhat;
+        sum += e * e;
+      }
+      return sum / lrState.points.length;
+    }
+
+    function fitLR() {
+      const n = lrState.points.length;
+      let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+      for (const p of lrState.points) {
+        sumX += p.x;
+        sumY += p.y;
+        sumXY += p.x * p.y;
+        sumXX += p.x * p.x;
+      }
+      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+      const intercept = (sumY - slope * sumX) / n;
+      lrState.slope = slope;
+      lrState.intercept = intercept;
+      document.getElementById('lrSlope').value = slope;
+      document.getElementById('lrIntercept').value = intercept;
+      drawLR();
+    }
+
+    function drawLine(ctx, w, h, slope, intercept, color, dashed = false) {
+      const p1 = mapToCanvas(0, slope * 0 + intercept, w, h);
+      const p2 = mapToCanvas(1, slope * 1 + intercept, w, h);
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      if (dashed) ctx.setLineDash([8, 5]);
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawLR() {
+      const canvas = document.getElementById('lrCanvas');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      drawAxes(ctx, w, h);
+
+      for (const p of lrState.points) {
+        const c = mapToCanvas(p.x, p.y, w, h);
+        ctx.fillStyle = '#2563eb';
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, 4, 0, TAU);
+        ctx.fill();
+      }
+
+      drawLine(ctx, w, h, lrState.trueSlope, lrState.trueIntercept, '#16a34a', true);
+      drawLine(ctx, w, h, lrState.slope, lrState.intercept, '#ea580c', false);
+
+      const value = mse(lrState.slope, lrState.intercept);
+      document.getElementById('lrSlopeVal').textContent = Number(lrState.slope).toFixed(2);
+      document.getElementById('lrInterceptVal').textContent = Number(lrState.intercept).toFixed(2);
+      document.getElementById('lrMetrics').innerHTML =
+        `<strong>Mean Squared Error</strong><br><span class="mono">${value.toFixed(4)}</span><br><br>` +
+        `<strong>Tip</strong><br>Try to lower MSE manually, then press <span class="mono">Auto Fit</span>.`;
+    }
+
+    // ---------- k-NN ----------
+    const knnState = {
+      points: [],
+      query: null,
+      k: 5,
+      neighbors: []
+    };
+
+    function genKNNData() {
+      knnState.points = [];
+      const centers = [
+        { x: 0.3, y: 0.7, label: 'A' },
+        { x: 0.7, y: 0.3, label: 'B' }
+      ];
+      centers.forEach(c => {
+        for (let i = 0; i < 40; i++) {
+          knnState.points.push({
+            x: Math.max(0.04, Math.min(0.96, c.x + rand(-0.18, 0.18))),
+            y: Math.max(0.04, Math.min(0.96, c.y + rand(-0.18, 0.18))),
+            label: c.label
+          });
+        }
+      });
+      knnState.query = null;
+      knnState.neighbors = [];
+    }
+
+    function classifyKNN() {
+      if (!knnState.query) return;
+      const sorted = [...knnState.points].sort((a, b) => dist(a, knnState.query) - dist(b, knnState.query));
+      knnState.neighbors = sorted.slice(0, knnState.k);
+      const voteA = knnState.neighbors.filter(p => p.label === 'A').length;
+      const voteB = knnState.neighbors.length - voteA;
+      knnState.query.pred = voteA >= voteB ? 'A' : 'B';
+      knnState.query.votes = { voteA, voteB };
+    }
+
+    function drawKNN() {
+      const canvas = document.getElementById('knnCanvas');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      drawAxes(ctx, w, h);
+
+      for (const p of knnState.points) {
+        const c = mapToCanvas(p.x, p.y, w, h);
+        ctx.fillStyle = p.label === 'A' ? '#2563eb' : '#ea580c';
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, 4, 0, TAU);
+        ctx.fill();
+      }
+
+      if (knnState.query) {
+        const q = mapToCanvas(knnState.query.x, knnState.query.y, w, h);
+
+        for (const n of knnState.neighbors) {
+          const c = mapToCanvas(n.x, n.y, w, h);
+          ctx.strokeStyle = '#94a3b8';
+          ctx.setLineDash([6, 6]);
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.moveTo(q.x, q.y);
+          ctx.lineTo(c.x, c.y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        ctx.fillStyle = knnState.query.pred === 'A' ? '#1d4ed8' : '#c2410c';
+        ctx.strokeStyle = '#111827';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(q.x, q.y, 7, 0, TAU);
+        ctx.fill();
+        ctx.stroke();
+
+        document.getElementById('knnMetrics').innerHTML =
+          `<strong>Prediction</strong><br>Class <span class="mono">${knnState.query.pred}</span><br>` +
+          `<strong>Vote</strong><br>A: ${knnState.query.votes.voteA}, B: ${knnState.query.votes.voteB}`;
+      } else {
+        document.getElementById('knnMetrics').innerHTML =
+          '<strong>Prediction</strong><br>Click on the plot to classify a new point.';
+      }
+    }
+
+    // ---------- Decision Tree ----------
+    const treeNodes = {
+      root: { x: 0.55, y: 0.16, text: 'Outlook?', type: 'decision' },
+      humidity: { x: 0.28, y: 0.38, text: 'Humidity?', type: 'decision' },
+      wind: { x: 0.55, y: 0.60, text: 'Windy?', type: 'decision' },
+      playOvercast: { x: 0.82, y: 0.38, text: 'Play', type: 'leafPlay' },
+      noHigh: { x: 0.14, y: 0.60, text: 'No', type: 'leafNo' },
+      playLow: { x: 0.41, y: 0.60, text: 'Play', type: 'leafPlay' },
+      playNoWind: { x: 0.41, y: 0.82, text: 'Play', type: 'leafPlay' },
+      noYesWind: { x: 0.69, y: 0.82, text: 'No', type: 'leafNo' }
+    };
+
+    let activeEdges = [];
+
+    function treeEval() {
+      const outlook = document.getElementById('outlook').value;
+      const humidity = document.getElementById('humidity').value;
+      const windy = document.getElementById('windy').value;
+      activeEdges = [];
+
+      let result = 'Play';
+      if (outlook === 'Sunny') {
+        activeEdges.push(['root', 'humidity']);
+        if (humidity === 'High') {
+          activeEdges.push(['humidity', 'noHigh']);
+          result = 'No';
+        } else {
+          activeEdges.push(['humidity', 'playLow']);
+          result = 'Play';
+        }
+      } else if (outlook === 'Overcast') {
+        activeEdges.push(['root', 'playOvercast']);
+        result = 'Play';
+      } else {
+        activeEdges.push(['root', 'wind']);
+        if (windy === 'No') {
+          activeEdges.push(['wind', 'playNoWind']);
+          result = 'Play';
+        } else {
+          activeEdges.push(['wind', 'noYesWind']);
+          result = 'No';
+        }
+      }
+
+      document.getElementById('treeMetrics').innerHTML =
+        `<strong>Decision Path</strong><br><span class="mono">Outlook=${outlook}, Humidity=${humidity}, Windy=${windy}</span><br>` +
+        `<strong>Prediction</strong><br>${result}`;
+      drawTree();
+    }
+
+    function drawTreeEdge(ctx, a, b, label, highlight) {
+      const w = ctx.canvas.width;
+      const h = ctx.canvas.height;
+      const p1 = mapToCanvas(a.x, a.y, w, h);
+      const p2 = mapToCanvas(b.x, b.y, w, h);
+
+      ctx.strokeStyle = highlight ? '#0f766e' : '#94a3b8';
+      ctx.lineWidth = highlight ? 4 : 2;
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+
+      const mx = (p1.x + p2.x) / 2;
+      const my = (p1.y + p2.y) / 2;
+      ctx.fillStyle = '#334155';
+      ctx.font = '15px Avenir Next';
+      ctx.fillText(label, mx + 6, my - 6);
+    }
+
+    function drawTreeNode(ctx, n) {
+      const w = ctx.canvas.width;
+      const h = ctx.canvas.height;
+      const p = mapToCanvas(n.x, n.y, w, h);
+
+      if (n.type === 'decision') {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = '#e2e8f0';
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 2;
+        ctx.fillRect(-36, -36, 72, 72);
+        ctx.strokeRect(-36, -36, 72, 72);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = '#dcfce7';
+        ctx.strokeStyle = '#16a34a';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(p.x - 48, p.y - 24, 96, 48, 10);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = n.type === 'leafNo' ? '#dc2626' : '#0f172a';
+      ctx.font = n.type.includes('leaf') ? 'bold 34px Avenir Next' : '30px Avenir Next';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(n.text, p.x, p.y + (n.type === 'decision' ? 2 : 0));
+    }
+
+    function edgeActive(a, b) {
+      return activeEdges.some(e => e[0] === a && e[1] === b);
+    }
+
+    function drawTree() {
+      const canvas = document.getElementById('treeCanvas');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      drawTreeEdge(ctx, treeNodes.root, treeNodes.humidity, 'Sunny', edgeActive('root', 'humidity'));
+      drawTreeEdge(ctx, treeNodes.root, treeNodes.playOvercast, 'Overcast', edgeActive('root', 'playOvercast'));
+      drawTreeEdge(ctx, treeNodes.root, treeNodes.wind, 'Rain', edgeActive('root', 'wind'));
+      drawTreeEdge(ctx, treeNodes.humidity, treeNodes.noHigh, 'High', edgeActive('humidity', 'noHigh'));
+      drawTreeEdge(ctx, treeNodes.humidity, treeNodes.playLow, 'Low', edgeActive('humidity', 'playLow'));
+      drawTreeEdge(ctx, treeNodes.wind, treeNodes.playNoWind, 'No', edgeActive('wind', 'playNoWind'));
+      drawTreeEdge(ctx, treeNodes.wind, treeNodes.noYesWind, 'Yes', edgeActive('wind', 'noYesWind'));
+
+      Object.values(treeNodes).forEach(n => drawTreeNode(ctx, n));
+    }
+
+    // ---------- k-Means ----------
+    const kmState = {
+      points: [],
+      centroids: [],
+      k: 3,
+      iter: 0,
+      wcss: 0
+    };
+
+    const kmColors = ['#2563eb', '#ea580c', '#16a34a', '#a855f7', '#d946ef', '#0ea5e9'];
+
+    function genKMPoints() {
+      kmState.points = [];
+      const seeds = [
+        { x: 0.25, y: 0.75 },
+        { x: 0.7, y: 0.28 },
+        { x: 0.72, y: 0.75 },
+        { x: 0.28, y: 0.28 }
+      ];
+      for (let i = 0; i < 120; i++) {
+        const s = seeds[i % seeds.length];
+        kmState.points.push({
+          x: Math.max(0.03, Math.min(0.97, s.x + rand(-0.18, 0.18))),
+          y: Math.max(0.03, Math.min(0.97, s.y + rand(-0.18, 0.18))),
+          c: -1
+        });
+      }
+      kmState.centroids = [];
+      kmState.iter = 0;
+      kmState.wcss = 0;
+    }
+
+    function initCentroids() {
+      kmState.centroids = [];
+      const used = new Set();
+      while (kmState.centroids.length < kmState.k) {
+        const idx = Math.floor(Math.random() * kmState.points.length);
+        if (used.has(idx)) continue;
+        used.add(idx);
+        kmState.centroids.push({ x: kmState.points[idx].x, y: kmState.points[idx].y });
+      }
+      assignKM();
+      kmState.iter = 0;
+    }
+
+    function assignKM() {
+      if (!kmState.centroids.length) return;
+      kmState.wcss = 0;
+      for (const p of kmState.points) {
+        let best = 0;
+        let bestD = Infinity;
+        kmState.centroids.forEach((c, i) => {
+          const d = dist(p, c);
+          if (d < bestD) {
+            bestD = d;
+            best = i;
+          }
+        });
+        p.c = best;
+        kmState.wcss += bestD * bestD;
+      }
+    }
+
+    function updateKM() {
+      if (!kmState.centroids.length) return;
+      const sums = Array.from({ length: kmState.k }, () => ({ x: 0, y: 0, n: 0 }));
+      for (const p of kmState.points) {
+        sums[p.c].x += p.x;
+        sums[p.c].y += p.y;
+        sums[p.c].n += 1;
+      }
+      kmState.centroids = kmState.centroids.map((c, i) => {
+        if (!sums[i].n) return c;
+        return { x: sums[i].x / sums[i].n, y: sums[i].y / sums[i].n };
+      });
+    }
+
+    function stepKM() {
+      if (!kmState.centroids.length) initCentroids();
+      assignKM();
+      updateKM();
+      assignKM();
+      kmState.iter += 1;
+      drawKM();
+    }
+
+    function runKM() {
+      for (let i = 0; i < 10; i++) stepKM();
+    }
+
+    function drawKM() {
+      const canvas = document.getElementById('kmCanvas');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      drawAxes(ctx, w, h);
+
+      for (const p of kmState.points) {
+        const c = mapToCanvas(p.x, p.y, w, h);
+        const color = p.c >= 0 ? kmColors[p.c % kmColors.length] : '#94a3b8';
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, 4, 0, TAU);
+        ctx.fill();
+      }
+
+      kmState.centroids.forEach((c, i) => {
+        const p = mapToCanvas(c.x, c.y, w, h);
+        ctx.strokeStyle = '#111827';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(p.x - 9, p.y - 9);
+        ctx.lineTo(p.x + 9, p.y + 9);
+        ctx.moveTo(p.x + 9, p.y - 9);
+        ctx.lineTo(p.x - 9, p.y + 9);
+        ctx.stroke();
+
+        ctx.fillStyle = kmColors[i % kmColors.length];
+        ctx.fillRect(p.x + 10, p.y - 10, 14, 14);
+      });
+
+      document.getElementById('kmMetrics').innerHTML =
+        `<strong>Iteration</strong><br>${kmState.iter}<br>` +
+        `<strong>WCSS</strong><br><span class="mono">${kmState.wcss.toFixed(4)}</span>`;
+    }
+
+    // ---------- Wire up ----------
+    activateTabs();
+
+    // Linear Regression events
+    document.getElementById('lrData').addEventListener('click', () => {
+      genLRData();
+      drawLR();
+    });
+    document.getElementById('lrFit').addEventListener('click', fitLR);
+    document.getElementById('lrSlope').addEventListener('input', (e) => {
+      lrState.slope = Number(e.target.value);
+      drawLR();
+    });
+    document.getElementById('lrIntercept').addEventListener('input', (e) => {
+      lrState.intercept = Number(e.target.value);
+      drawLR();
+    });
+
+    // k-NN events
+    document.getElementById('knnK').addEventListener('input', (e) => {
+      knnState.k = Number(e.target.value);
+      document.getElementById('knnKVal').textContent = knnState.k;
+      classifyKNN();
+      drawKNN();
+    });
+    document.getElementById('knnData').addEventListener('click', () => {
+      genKNNData();
+      drawKNN();
+    });
+    document.getElementById('knnClear').addEventListener('click', () => {
+      knnState.query = null;
+      knnState.neighbors = [];
+      drawKNN();
+    });
+    document.getElementById('knnCanvas').addEventListener('click', (e) => {
+      const rect = e.target.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      const x = (px - 40) / (e.target.width - 80);
+      const y = 1 - (py - 40) / (e.target.height - 80);
+      knnState.query = {
+        x: Math.max(0, Math.min(1, x)),
+        y: Math.max(0, Math.min(1, y))
+      };
+      classifyKNN();
+      drawKNN();
+    });
+
+    // Decision tree events
+    document.getElementById('treeRun').addEventListener('click', treeEval);
+
+    // k-Means events
+    document.getElementById('kmK').addEventListener('input', (e) => {
+      kmState.k = Number(e.target.value);
+      document.getElementById('kmKVal').textContent = kmState.k;
+      kmState.centroids = [];
+      kmState.iter = 0;
+      drawKM();
+    });
+    document.getElementById('kmData').addEventListener('click', () => {
+      genKMPoints();
+      drawKM();
+    });
+    document.getElementById('kmInit').addEventListener('click', () => {
+      initCentroids();
+      drawKM();
+    });
+    document.getElementById('kmStep').addEventListener('click', stepKM);
+    document.getElementById('kmRun').addEventListener('click', runKM);
+
+    // Initial state
+    genLRData();
+    drawLR();
+    genKNNData();
+    drawKNN();
+    treeEval();
+    genKMPoints();
+    drawKM();
+  </script>
+</body>
+</html>
