@@ -1,0 +1,528 @@
+\documentclass[10pt]{beamer}
+
+% --- Modern Theme ---
+\usetheme{metropolis}
+\usecolortheme{default}
+\setbeamercolor{background canvas}{bg=white}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[scale=2]{ccicons}
+\usepackage{pgfplots}
+\usepgfplotslibrary{dateplot}
+\usepackage{xspace}
+
+% --- Title Information ---
+\title{Foundations of Artificial Intelligence}
+\subtitle{Part V: Natural Language Processing (Introductory)}
+\institute{Department of Computer Science}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}{Lecture Roadmap}
+    \setbeamertemplate{section in toc}[sections numbered]
+    \tableofcontents[hideallsubsections]
+\end{frame}
+
+\begin{frame}{Learning Objectives}
+    By the end of this lecture, you should be able to:
+    \begin{itemize}
+        \item Apply basic text preprocessing techniques: tokenization, lowercasing, stopword removal, stemming.
+        \item Build and interpret Bag-of-Words representations for text.
+        \item Implement basic sentiment analysis using word-level patterns.
+        \item Discuss real-world NLP applications: chatbots, translation, and speech systems.
+        \item Recognize the role of language models and the limitations of simple approaches.
+    \end{itemize}
+\end{frame}
+
+\section{Text Preprocessing}
+
+\begin{frame}{Why Preprocessing Matters}
+    Raw text is messy:
+    \begin{itemize}
+        \item Mixed case, punctuation, special characters.
+        \item Irrelevant words (``the'', ``a'', ``is'').
+        \item Different forms of the same word (``run'', ``runs'', ``running'').
+    \end{itemize}
+    \vspace{0.2cm}
+    Preprocessing standardizes text so that algorithms see meaningful units consistently.
+
+    \vspace{0.2cm}
+    \textbf{Core steps:}
+    \begin{enumerate}
+        \item Tokenization
+        \item Lowercasing and normalization
+        \item Stopword removal
+        \item Stemming/lemmatization
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Tokenization}
+    \textbf{Goal:} Split text into individual words (tokens).
+
+    \vspace{0.2cm}
+    \textbf{Simple approach:} split on whitespace and punctuation.
+    \begin{itemize}
+        \item Input: \texttt{``Hello, world! How are you?''}
+        \item Output: \texttt{[``Hello'', ``world'', ``How'', ``are'', ``you'']}
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Challenges:}
+    \begin{itemize}
+        \item Contractions: \texttt{``don't''} $\to$ keep as one or split?
+        \item Hyphenated words: \texttt{``state-of-the-art''}.
+        \item URLs, emails, numbers: preserve or normalize?
+    \end{itemize}
+
+    \vspace{0.2cm}
+    Most tools use regex-based or language-aware tokenizers.
+\end{frame}
+
+\begin{frame}{Lowercasing and Normalization}
+    \textbf{Lowercasing:} Convert all text to lowercase.
+    \begin{itemize}
+        \item Reduces vocabulary size.
+        \item Treats \texttt{``Hello''}, \texttt{``hello''}, \texttt{``HELLO''} identically.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Other normalizations:}
+    \begin{itemize}
+        \item Remove accents: \texttt{``café''} $\to$ \texttt{``cafe''}.
+        \item Replace numbers with placeholders: \texttt{``123 Main St''} $\to$ \texttt{``[NUM] Main St''}.
+        \item Expand contractions: \texttt{``don't''} $\to$ \texttt{``do not''}.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    Trade-off: lose information (e.g., proper nouns) for uniformity.
+\end{frame}
+
+\begin{frame}{Stopword Removal}
+    \textbf{Stopwords:} Common words with little discriminative power.
+    \begin{itemize}
+        \item Articles: ``a'', ``an'', ``the''
+        \item Pronouns: ``I'', ``you'', ``he'', ``she''
+        \item Prepositions: ``in'', ``on'', ``at'', ``to''
+        \item Conjunctions: ``and'', ``or'', ``but''
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Example:}
+    \begin{itemize}
+        \item Before: ``The cat is on the mat and it is very soft.''
+        \item After: ``cat mat soft''
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Benefit:} Reduces noise and speeds up processing.
+
+    \vspace{0.1cm}
+    \textbf{Caveat:} Domain-dependent; task may require keeping some stopwords.
+\end{frame}
+
+\begin{frame}{Stemming and Lemmatization}
+    \textbf{Stemming:} Remove suffixes to get word root.
+    \begin{itemize}
+        \item Input: ``running'', ``runs'', ``ran'', ``runner''
+        \item Output (Porter Stemmer): ``run'', ``run'', ``ran'', ``runner''
+        \item Heuristic-based; may produce non-words.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Lemmatization:} Reduce to canonical dictionary form (lemma).
+    \begin{itemize}
+        \item Input: ``running'', ``runs'', ``ran'', ``runner''
+        \item Output: ``run'', ``run'', ``go'', ``run''
+        \item Requires linguistic knowledge; more accurate but slower.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Trade-off:} Stemming is fast but crude; lemmatization is precise but needs external resources.
+\end{frame}
+
+\begin{frame}{Preprocessing Pipeline Example}
+    \small
+    \setlength{\tabcolsep}{8pt}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{>{\raggedright\arraybackslash}p{3cm} >{\raggedright\arraybackslash}p{5.5cm}}
+        \toprule
+        \textbf{Step} & \textbf{Result} \\
+        \midrule
+        Original & ``The analysis of running cats and dogs is fascinating!'' \\
+        Tokenize & [``The'', ``analysis'', ``of'', ``running'', ``cats'', ``and'', ``dogs'', ``is'', ``fascinating'', ``!''] \\
+        Lowercase & [``the'', ``analysis'', ``of'', ``running'', ``cats'', ``and'', ``dogs'', ``is'', ``fascinating'', ``!''] \\
+        Remove punct. & [``the'', ``analysis'', ``of'', ``running'', ``cats'', ``and'', ``dogs'', ``is'', ``fascinating''] \\
+        Remove stopwords & [``analysis'', ``running'', ``cats'', ``dogs'', ``fascinating''] \\
+        Stem & [``analysi'', ``run'', ``cat'', ``dog'', ``fascin''] \\
+        \bottomrule
+    \end{tabular}
+\end{frame}
+
+\section{Bag-of-Words Representation}
+
+\begin{frame}{From Tokens to Vectors}
+    \textbf{Bag-of-Words (BoW):} Represent text as unordered collection of word counts.
+
+    \vspace{0.2cm}
+    Key idea: ignore order, focus on word frequency.
+
+    \vspace{0.3cm}
+    \textbf{Example:}
+    \begin{itemize}
+        \item Document 1: ``I love machine learning''
+        \item Document 2: ``I love cats and dogs''
+        \item Vocabulary: \{I, love, machine, learning, cats, dogs, and\}
+    \end{itemize}
+
+    \vspace{0.2cm}
+    BoW vectors (counts):
+    \begin{itemize}
+        \item Doc 1: $[1, 1, 1, 1, 0, 0, 0]$
+        \item Doc 2: $[1, 1, 0, 0, 1, 1, 1]$
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{BoW Variants: TF and TF-IDF}
+    \textbf{Term Frequency (TF):} Count of word in document.
+    \[
+        \text{TF}(w, d) = \text{count}(w, d)
+    \]
+
+    \vspace{0.2cm}
+    \textbf{Problem:} Common words dominate. Longer documents have higher counts.
+
+    \vspace{0.25cm}
+    \textbf{TF-IDF:} Weight by inverse document frequency.
+    \[
+        \text{TF-IDF}(w, d) = \text{TF}(w, d) \times \log\left(\frac{N}{|\{d : w \in d\}|}\right)
+    \]
+    where $N$ is total documents and denominator counts how many documents contain $w$.
+
+    \vspace{0.2cm}
+    \textbf{Intuition:} Rare words in a document get high weight.
+\end{frame}
+
+\begin{frame}{BoW Strengths and Limitations}
+    \textbf{Strengths:}
+    \begin{itemize}
+        \item Simple to implement and understand.
+        \item Works well with many classifiers (Naive Bayes, SVM, etc.).
+        \item Computationally efficient.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Limitations:}
+    \begin{itemize}
+        \item \textbf{Order-independent:} ``dog bites man'' and ``man bites dog'' are identical.
+        \item \textbf{Loses context:} Single words may be ambiguous (``bank'': financial or riverside?).
+        \item \textbf{Sparse representations:} vocabulary can be very large (high-dimensional).
+        \item \textbf{No semantic similarity:} ``dog'' and ``cat'' are unrelated vectors.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textit{Word embeddings (e.g., Word2Vec, GloVe) address some limitations.}
+\end{frame}
+
+\begin{frame}{Document Similarity with BoW}
+    \textbf{Goal:} Measure how similar two documents are.
+
+    \vspace{0.2cm}
+    \textbf{Cosine Similarity:}
+    \[
+        \cos(\theta) = \frac{\vec{d}_1 \cdot \vec{d}_2}{|\vec{d}_1| \cdot |\vec{d}_2|}
+    \]
+    where $\vec{d}_1, \vec{d}_2$ are BoW or TF-IDF vectors.
+
+    \vspace{0.2cm}
+    \textbf{Range:} $[{-1, 1}]$ (or $[0, 1]$ for non-negative vectors).
+    \begin{itemize}
+        \item 1 = identical direction (very similar).
+        \item 0 = orthogonal (no similarity).
+        \item $-1$ = opposite (rare in BoW).
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Application:} Information retrieval, plagiarism detection, document clustering.
+\end{frame}
+
+\section{Basic Sentiment Analysis}
+
+\begin{frame}{What Is Sentiment Analysis?}
+    \textbf{Goal:} Determine the emotional tone or opinion in text.
+
+    \vspace{0.2cm}
+    \textbf{Common task:} Binary classification.
+    \begin{itemize}
+        \item Positive vs. Negative
+        \item Example: product reviews, social media posts.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{More nuanced:} Multi-class (positive, neutral, negative) or regression (score 1--5).
+
+    \vspace{0.2cm}
+    \textbf{Why it matters:}
+    \begin{itemize}
+        \item Brand monitoring.
+        \item Customer feedback analysis.
+        \item Social listening.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Lexicon-Based Approach}
+    \textbf{Idea:} Use a sentiment lexicon (dictionary of words with known polarity).
+
+    \vspace{0.2cm}
+    \textbf{Example lexicon:}
+    \small
+    \begin{tabularx}{0.9\textwidth}{l l}
+        \textbf{Positive} & good, great, excellent, love, amazing \\
+        \textbf{Negative} & bad, terrible, hate, awful, disappointing
+    \end{tabularx}
+
+    \normalsize
+    \vspace{0.2cm}
+    \textbf{Algorithm:}
+    \begin{enumerate}
+        \item Tokenize and preprocess text.
+        \item Count positive and negative words.
+        \item Assign label: positive if more positive, else negative.
+    \end{enumerate}
+
+    \vspace{0.2cm}
+    \textbf{Example:} ``This movie is great and I loved it!''
+    \begin{itemize}
+        \item Positive words: great, loved (count = 2).
+        \item Negative words: none (count = 0).
+        \item Result: Positive.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Challenges in Sentiment Analysis}
+    \textbf{Negation:} ``I did \textbf{not} like this movie.''
+    \begin{itemize}
+        \item ``like'' is positive, but negated.
+        \item Simple lexicon approach fails.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Sarcasm:} ``Oh, great, another traffic jam.''
+    \begin{itemize}
+        \item ``great'' is positive, but context is negative.
+        \item Requires understanding intent.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Domain-specific language:} ``sick'' can be negative or positive (slang).
+
+    \vspace{0.2cm}
+    \textbf{Ambiguous words:} ``interesting'' could be positive or negative depending on context.
+
+    \vspace{0.2cm}
+    \textit{Advanced methods: machine learning, neural networks, contextual embeddings.}
+\end{frame}
+
+\begin{frame}{Feature-Based Sentiment Analysis}
+    Extend BoW with engineered features:
+    \begin{itemize}
+        \item \textbf{Word polarity:} sentiment score of each word (e.g., AFINN, TextBlob).
+        \item \textbf{Negation handling:} flip polarity if preceded by negation.
+        \item \textbf{Capitalization:} ``AMAZING'' might indicate strong emotion.
+        \item \textbf{Punctuation:} multiple exclamation marks ``!!!'' suggest intensity.
+        \item \textbf{Part-of-speech:} adjectives often carry opinion.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Workflow:}
+    \begin{enumerate}
+        \item Extract features from preprocessed text.
+        \item Train classifier (Naive Bayes, SVM, Logistic Regression).
+        \item Predict sentiment on new reviews.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Sentiment Analysis Performance Metrics}
+    \textbf{Classification metrics:}
+    \begin{itemize}
+        \item \textbf{Accuracy:} fraction of correct predictions.
+        \item \textbf{Precision:} of predicted positives, how many are truly positive.
+        \item \textbf{Recall:} of truly positive cases, how many are found.
+        \item \textbf{F1-score:} harmonic mean of precision and recall.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Example confusion matrix (binary):}
+    \small
+    \begin{tabularx}{0.8\textwidth}{l c c}
+        \toprule
+        & \textbf{Predicted Pos} & \textbf{Predicted Neg} \\
+        \midrule
+        \textbf{Actual Pos} & TP & FN \\
+        \textbf{Actual Neg} & FP & TN \\
+        \bottomrule
+    \end{tabularx}
+
+    \normalsize
+    \vspace{0.2cm}
+    Precision $= \frac{\text{TP}}{\text{TP}+\text{FP}}$, \quad Recall $= \frac{\text{TP}}{\text{TP}+\text{FN}}$
+\end{frame}
+
+\section{NLP Applications}
+
+\begin{frame}{Real-World NLP Applications}
+    NLP powers many systems we use daily:
+    \begin{itemize}
+        \item \textbf{Chatbots \& Virtual Assistants:} Siri, Alexa, ChatGPT.
+        \item \textbf{Machine Translation:} Google Translate, DeepL.
+        \item \textbf{Speech Recognition \& Synthesis:} Dictation, text-to-speech.
+        \item \textbf{Information Retrieval:} Search engines, document ranking.
+        \item \textbf{Named Entity Recognition:} Extract people, places, organizations.
+        \item \textbf{Question Answering:} Systems that find answers from text.
+        \item \textbf{Text Summarization:} Automatic document or article condensing.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textit{Modern systems often combine NLP with neural networks and large language models.}
+\end{frame}
+
+\begin{frame}{Chatbots}
+    \textbf{Goal:} Simulate conversation with a human via text (or speech + NLP).
+
+    \vspace{0.2cm}
+    \textbf{Architecture levels:}
+    \begin{itemize}
+        \item \textbf{Rule-based:} Pattern matching, lookup tables. Limited but predictable.
+        \item \textbf{ML-based:} Learns from training data. Intent classification + response generation.
+        \item \textbf{Neural (Sequence-to-Seq):} Encoder-decoder models, transformer-based (e.g., GPT).
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Challenge:} Understanding context and maintaining conversation flow.
+
+    \vspace{0.2cm}
+    \textbf{Current frontier:} Large language models with few-shot learning enable more natural dialogue.
+\end{frame}
+
+\begin{frame}{Machine Translation}
+    \textbf{Goal:} Translate text from one language to another.
+
+    \vspace{0.2cm}
+    \textbf{Historical approaches:}
+    \begin{itemize}
+        \item \textbf{Rule-based:} Hand-coded grammar rules and bilingual dictionaries.
+        \item \textbf{Statistical MT (SMT):} Learn probabilities from aligned parallel texts.
+        \item \textbf{Neural MT (NMT):} Encoder-decoder with attention mechanisms.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Key challenge:} Structural differences between languages, idioms, context.
+
+    \vspace{0.2cm}
+    \textbf{Sequence-to-Sequence with Attention:}
+    \begin{itemize}
+        \item Encoder processes source language.
+        \item Decoder generates target language.
+        \item Attention focuses on relevant source words.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textit{Modern systems (Google Translate, DeepL) use transformer models.}
+\end{frame}
+
+\begin{frame}{Speech Recognition and Synthesis}
+    \textbf{Speech Recognition:} Convert audio to text.
+    \begin{itemize}
+        \item Acoustic model: features from audio $\to$ phonemes.
+        \item Language model: sequence of words, penalizes unlikely sentences.
+        \item Decoding: find best word sequence given audio.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Speech Synthesis (TTS):} Convert text to audio.
+    \begin{itemize}
+        \item Text analysis: parse input, normalize abbreviations.
+        \item Linguistic feature extraction: phoneme, duration, pitch.
+        \item Vocoder: generate waveform from features (can sound robotic or natural).
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Modern methods:} Neural networks and end-to-end learning improve naturalness and robustness.
+\end{frame}
+
+\begin{frame}{NLP Challenges and Limitations}
+    \textbf{Fundamental issues:}
+    \begin{itemize}
+        \item \textbf{Ambiguity:} Words and sentences have multiple meanings.
+        \item \textbf{Context dependence:} Meaning relies on surrounding text and world knowledge.
+        \item \textbf{Idioms \& Figurative language:} ``raining cats and dogs'' is not literal.
+        \item \textbf{Multilingual:} Each language has unique structure and resources.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Data challenges:}
+    \begin{itemize}
+        \item Labeled data is expensive to create.
+        \item Imbalanced classes (e.g., rare entities).
+        \item Domain shift: model trained on news fails on social media.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textit{Large Language Models (LLMs) have dramatically improved performance through scale and pretraining.}
+\end{frame}
+
+\begin{frame}{The Role of Language Models}
+    \textbf{Language models:} Predict next word given context.
+    \[
+        P(\text{word}_t | \text{word}_{1:t-1})
+    \]
+
+    \vspace{0.2cm}
+    \textbf{Impact:}
+    \begin{itemize}
+        \item Foundation for many NLP tasks (translation, question answering).
+        \item Transfer learning: pretrain on large text corpora, fine-tune on specific tasks.
+        \item In-context learning: LLMs adapt to new tasks with few examples.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Examples:}
+    \begin{itemize}
+        \item GPT models (autoregressive): Generate coherent long-form text.
+        \item BERT (bidirectional): Better at understanding, classification, NER.
+        \item Transformer architecture: Parallel processing, self-attention over context.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textit{Tradeoff: Larger models are more capable but require more compute and data.}
+\end{frame}
+
+\begin{frame}{Summary and Next Steps}
+    \textbf{What we covered:}
+    \begin{itemize}
+        \item Preprocessing: tokenization, normalization, stemming.
+        \item BoW representation: efficient, simple, limited.
+        \item Sentiment analysis: lexicon-based and learning-based approaches.
+        \item Applications: chatbots, translation, speech, and more.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Key takeaway:} NLP is a spectrum from simple pattern-matching to complex neural models.
+
+    \vspace{0.2cm}
+    \textbf{Up next (Lecture 6):} Introduction to Neural Networks --- the engine behind modern NLP.
+    \begin{itemize}
+        \item Biological inspiration and the perceptron.
+        \item Multilayer networks and backpropagation.
+    \end{itemize}
+\end{frame}
+
+\end{document}

@@ -1,0 +1,1340 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NLP Interactive Demo — Lecture 5</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --ink: #1b2432;
+      --muted: #5e6b82;
+      --line: #d8e0ef;
+      --accent: #0f766e;
+      --accent-light: #d1fae5;
+      --blue: #2563eb;
+      --blue-light: #dbeafe;
+      --orange: #ea580c;
+      --orange-light: #ffedd5;
+      --purple: #7c3aed;
+      --purple-light: #ede9fe;
+      --red: #dc2626;
+      --red-light: #fee2e2;
+      --yellow: #ca8a04;
+      --yellow-light: #fef9c3;
+      --green: #16a34a;
+      --shadow: 0 8px 24px rgba(27,36,50,0.09);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 6% 6%, #e7f7f3 0 18%, transparent 32%),
+        radial-gradient(circle at 94% 8%, #e8eeff 0 18%, transparent 32%),
+        var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .wrap { max-width: 1260px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .hero {
+      background: var(--panel);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 22px 28px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .hero-icon {
+      font-size: 2.6rem;
+      flex-shrink: 0;
+    }
+    .hero h1 { font-size: 1.55rem; line-height: 1.2; }
+    .hero p { color: var(--muted); font-size: 0.92rem; margin-top: 4px; }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .tab-btn {
+      border: 1.5px solid #cdd7ea;
+      border-radius: 10px;
+      background: #fff;
+      padding: 9px 16px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #334155;
+      transition: 140ms;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .tab-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 3px 8px rgba(15,118,110,0.25);
+    }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--panel);
+      border: 1px solid #e5ebf6;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card h2 { font-size: 1.05rem; margin-bottom: 10px; }
+    .card h3 { font-size: 0.92rem; font-weight: 700; margin-bottom: 6px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    /* ── Inputs ── */
+    textarea, input[type="text"] {
+      width: 100%;
+      border: 1.5px solid #d0d9ec;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.93rem;
+      font-family: inherit;
+      color: var(--ink);
+      resize: vertical;
+      background: #fafbff;
+      transition: border 120ms;
+    }
+    textarea:focus, input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: #fff;
+    }
+    button.run {
+      margin-top: 10px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 22px;
+      font-size: 0.93rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 120ms;
+    }
+    button.run:hover { background: #0a5e59; }
+    button.secondary {
+      background: #f1f5fb;
+      color: var(--ink);
+      border: 1.5px solid #d0d9ec;
+      border-radius: 10px;
+      padding: 8px 18px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Pipeline steps ── */
+    .pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .step {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+    .step-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      background: var(--accent-light);
+      color: var(--accent);
+      border-radius: 7px;
+      padding: 6px 10px;
+      text-align: center;
+    }
+    .step-value {
+      background: #f7f9fe;
+      border: 1px solid #e3e9f5;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 0.88rem;
+      font-family: Menlo, monospace;
+      word-break: break-word;
+      min-height: 34px;
+    }
+    .step-value.highlight { background: var(--accent-light); border-color: var(--accent); }
+
+    /* ── Token chips ── */
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border: 1.5px solid transparent;
+    }
+    .chip-default { background: #f0f4fc; color: #334155; border-color: #d0d9ec; }
+    .chip-stop { background: var(--red-light); color: var(--red); border-color: #fca5a5; }
+    .chip-keep { background: var(--accent-light); color: var(--accent); border-color: #6ee7b7; }
+    .chip-stem { background: var(--blue-light); color: var(--blue); border-color: #93c5fd; }
+    .chip-neg { background: var(--orange-light); color: var(--orange); border-color: #fdba74; }
+    .chip-pos { background: var(--yellow-light); color: var(--yellow); border-color: #fde047; }
+
+    /* ── BoW Matrix ── */
+    table.bow {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    table.bow th, table.bow td {
+      border: 1px solid #e3e9f5;
+      padding: 6px 10px;
+      text-align: center;
+    }
+    table.bow th { background: #f0f4fc; font-weight: 700; }
+    table.bow td.doc { font-weight: 600; text-align: left; background: #f7f9fe; }
+    table.bow td.val-high { background: var(--accent-light); font-weight: 700; color: var(--accent); }
+    table.bow td.val-med { background: var(--blue-light); color: var(--blue); }
+    table.bow td.val-zero { color: #c0cbe0; }
+
+    /* ── Bars ── */
+    .bar-wrap { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
+    .bar-row { display: flex; align-items: center; gap: 10px; }
+    .bar-label { min-width: 90px; font-size: 0.82rem; font-weight: 600; }
+    .bar-track { flex: 1; background: #e9edf8; border-radius: 6px; height: 18px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 6px; transition: width 0.5s ease; }
+    .bar-count { font-size: 0.82rem; color: var(--muted); min-width: 32px; text-align: right; }
+
+    /* ── Similarity meter ── */
+    .sim-result {
+      font-size: 2.2rem;
+      font-weight: 800;
+      text-align: center;
+      padding: 16px;
+      border-radius: 12px;
+      margin-top: 10px;
+    }
+    .sim-high { background: var(--accent-light); color: var(--accent); }
+    .sim-mid { background: var(--yellow-light); color: var(--yellow); }
+    .sim-low { background: var(--red-light); color: var(--red); }
+
+    /* ── Sentiment ── */
+    .sentiment-badge {
+      display: inline-block;
+      padding: 8px 22px;
+      border-radius: 999px;
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-top: 10px;
+    }
+    .badge-pos { background: var(--accent-light); color: var(--accent); }
+    .badge-neg { background: var(--red-light); color: var(--red); }
+    .badge-neu { background: var(--blue-light); color: var(--blue); }
+
+    /* ── TF-IDF visual ── */
+    .tfidf-cells { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .tfidf-cell {
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      min-width: 70px;
+      text-align: center;
+    }
+    .tfidf-word { font-size: 0.78rem; font-weight: 700; }
+    .tfidf-score { font-size: 1.1rem; font-weight: 800; }
+
+    /* ── Language model predictor ── */
+    .lm-suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .lm-word {
+      background: #f0f4fc;
+      border: 1.5px solid #d0d9ec;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 120ms;
+    }
+    .lm-word:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+    .lm-word .prob { color: var(--muted); font-weight: 400; font-size: 0.78rem; margin-left: 4px; }
+
+    /* ── NER ── */
+    .ner-text { font-size: 1.05rem; line-height: 2; word-spacing: 3px; }
+    .ner-span {
+      display: inline-block;
+      border-radius: 5px;
+      padding: 1px 7px;
+      margin: 0 1px;
+      font-weight: 700;
+      font-size: 0.92rem;
+    }
+    .ner-PERSON { background: #fde68a; color: #92400e; }
+    .ner-ORG { background: #bfdbfe; color: #1e40af; }
+    .ner-LOC { background: #bbf7d0; color: #166534; }
+    .ner-DATE { background: #e9d5ff; color: #6b21a8; }
+    .ner-MISC { background: #fed7aa; color: #9a3412; }
+    .ner-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .ner-tag { font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 5px; }
+
+    /* ── Confusion matrix ── */
+    table.conf {
+      border-collapse: collapse;
+      margin: 0 auto;
+    }
+    table.conf td, table.conf th {
+      width: 72px;
+      height: 56px;
+      text-align: center;
+      font-size: 0.88rem;
+      border: 1px solid #d0d9ec;
+    }
+    table.conf th { background: #f0f4fc; font-weight: 700; }
+    .conf-tp { background: var(--accent-light); font-weight: 800; color: var(--accent); }
+    .conf-tn { background: var(--blue-light); font-weight: 800; color: var(--blue); }
+    .conf-fp { background: var(--red-light); color: var(--red); }
+    .conf-fn { background: var(--orange-light); color: var(--orange); }
+
+    /* ── Metrics ── */
+    .metrics { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+    .metric-box {
+      flex: 1 1 120px;
+      background: #f7f9fe;
+      border: 1px solid #e3e9f5;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+    .metric-box .val { font-size: 1.6rem; font-weight: 800; }
+    .metric-box .lbl { font-size: 0.78rem; color: var(--muted); font-weight: 600; margin-top: 2px; }
+
+    /* ── Cosine viz ── */
+    canvas { display: block; border-radius: 10px; }
+
+    /* ── ngrams ── */
+    .ngram-list { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+    .ngram-item {
+      background: var(--purple-light);
+      color: var(--purple);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border: 1.5px solid #c4b5fd;
+    }
+
+    /* ── Attention heatmap ── */
+    .attn-grid { display: grid; gap: 2px; margin-top: 10px; }
+    .attn-row { display: flex; gap: 2px; }
+    .attn-cell {
+      width: 52px;
+      height: 36px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .attn-header {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-align: center;
+      width: 52px;
+    }
+
+    /* ── Info box ── */
+    .info {
+      background: var(--blue-light);
+      border-left: 4px solid var(--blue);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.88rem;
+      color: #1e3a5f;
+      margin-top: 10px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .step { grid-template-columns: 110px 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-icon">🗣️</div>
+    <div>
+      <h1>Natural Language Processing — Interactive Demo</h1>
+      <p>Lecture 5 · Foundations of Artificial Intelligence · Explore NLP concepts hands-on across all major topics.</p>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('preprocessing')">🔧 Preprocessing Pipeline</button>
+    <button class="tab-btn" onclick="showTab('bow')">📦 Bag-of-Words</button>
+    <button class="tab-btn" onclick="showTab('tfidf')">📊 TF-IDF</button>
+    <button class="tab-btn" onclick="showTab('cosine')">📐 Cosine Similarity</button>
+    <button class="tab-btn" onclick="showTab('sentiment')">❤️ Sentiment Analysis</button>
+    <button class="tab-btn" onclick="showTab('ngrams')">🔗 N-Grams</button>
+    <button class="tab-btn" onclick="showTab('ner')">🏷️ Named Entities</button>
+    <button class="tab-btn" onclick="showTab('lm')">🔮 Language Model</button>
+    <button class="tab-btn" onclick="showTab('metrics')">📈 Evaluation Metrics</button>
+    <button class="tab-btn" onclick="showTab('attention')">👁️ Attention</button>
+  </div>
+
+  <!-- ════════════════════════════════════
+       1. PREPROCESSING PIPELINE
+  ════════════════════════════════════ -->
+  <div id="tab-preprocessing" class="section active">
+    <div class="card">
+      <h2>🔧 Text Preprocessing Pipeline</h2>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;">Type any sentence and watch each preprocessing step in real time.</p>
+      <textarea id="prep-input" rows="3" placeholder="e.g. The Running cats and DOGS are playing beautifully in the park!">The Running cats and DOGS are playing beautifully in the park!</textarea>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+        <button class="run" onclick="runPipeline()">▶ Run Pipeline</button>
+        <label style="display:flex;align-items:center;gap:6px;font-size:0.87rem;font-weight:600;cursor:pointer;">
+          <input type="checkbox" id="do-stem" checked> Stemming
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:0.87rem;font-weight:600;cursor:pointer;">
+          <input type="checkbox" id="do-stop" checked> Remove Stopwords
+        </label>
+      </div>
+    </div>
+
+    <div class="card" id="pipeline-output" style="display:none;">
+      <h2>Pipeline Output</h2>
+      <div class="pipeline" id="pipeline-steps"></div>
+    </div>
+
+    <div class="card">
+      <h2>Stopword List Reference</h2>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:8px;">Common English stopwords that are typically removed:</p>
+      <div class="chips" id="stopword-chips"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       2. BAG-OF-WORDS
+  ════════════════════════════════════ -->
+  <div id="tab-bow" class="section">
+    <div class="card">
+      <h2>📦 Bag-of-Words Builder</h2>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;">Enter up to four documents. The tool builds the vocabulary and count matrix.</p>
+      <div class="grid-2" style="gap:8px;margin-bottom:8px;">
+        <div>
+          <div style="font-size:0.8rem;font-weight:700;margin-bottom:4px;">Document 1</div>
+          <input type="text" id="bow-d1" value="I love machine learning and AI">
+        </div>
+        <div>
+          <div style="font-size:0.8rem;font-weight:700;margin-bottom:4px;">Document 2</div>
+          <input type="text" id="bow-d2" value="I love natural language processing">
+        </div>
+        <div>
+          <div style="font-size:0.8rem;font-weight:700;margin-bottom:4px;">Document 3</div>
+          <input type="text" id="bow-d3" value="Machine learning is fun and useful">
+        </div>
+        <div>
+          <div style="font-size:0.8rem;font-weight:700;margin-bottom:4px;">Document 4</div>
+          <input type="text" id="bow-d4" value="Language models understand language well">
+        </div>
+      </div>
+      <button class="run" onclick="buildBoW()">▶ Build BoW Matrix</button>
+    </div>
+
+    <div class="card" id="bow-output" style="display:none;">
+      <h2>Count Matrix</h2>
+      <div style="overflow-x:auto;">
+        <table class="bow" id="bow-table"></table>
+      </div>
+      <div class="info" style="margin-top:12px;">
+        <b>Vocabulary size:</b> <span id="bow-vocab-size">—</span> unique words &nbsp;|&nbsp;
+        <b>Sparsity:</b> <span id="bow-sparsity">—</span>% zeros
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       3. TF-IDF
+  ════════════════════════════════════ -->
+  <div id="tab-tfidf" class="section">
+    <div class="card">
+      <h2>📊 TF-IDF Visualiser</h2>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;">Add up to four documents. Words with high TF-IDF scores are important <em>and</em> rare across the corpus.</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;">
+        <input type="text" id="tfidf-d1" value="the cat sat on the mat">
+        <input type="text" id="tfidf-d2" value="the dog sat on the log">
+        <input type="text" id="tfidf-d3" value="the cat chased the mouse">
+        <input type="text" id="tfidf-d4" value="the dog barked at the moon">
+      </div>
+      <button class="run" onclick="buildTFIDF()">▶ Compute TF-IDF</button>
+    </div>
+    <div class="card" id="tfidf-output" style="display:none;">
+      <h2>TF-IDF Scores per Document</h2>
+      <div id="tfidf-panels"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       4. COSINE SIMILARITY
+  ════════════════════════════════════ -->
+  <div id="tab-cosine" class="section">
+    <div class="card">
+      <h2>📐 Cosine Similarity Explorer</h2>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;">Enter two sentences. Their BoW vectors are computed and cosine similarity is calculated.</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
+        <div>
+          <div style="font-size:0.8rem;font-weight:700;margin-bottom:4px;">Sentence A</div>
+          <input type="text" id="cos-a" value="I love machine learning">
+        </div>
+        <div>
+          <div style="font-size:0.8rem;font-weight:700;margin-bottom:4px;">Sentence B</div>
+          <input type="text" id="cos-b" value="I enjoy deep learning models">
+        </div>
+      </div>
+      <button class="run" onclick="calcCosine()">▶ Compute Similarity</button>
+    </div>
+    <div class="card" id="cosine-output" style="display:none;">
+      <div class="grid-2">
+        <div>
+          <h3>Shared &amp; Unique Words</h3>
+          <div id="cos-words"></div>
+        </div>
+        <div>
+          <h3>Similarity Score</h3>
+          <div id="cos-result"></div>
+          <canvas id="cos-canvas" width="260" height="180" style="margin-top:12px;"></canvas>
+        </div>
+      </div>
+      <div class="info" style="margin-top:10px;" id="cos-explanation"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       5. SENTIMENT ANALYSIS
+  ════════════════════════════════════ -->
+  <div id="tab-sentiment" class="section">
+    <div class="card">
+      <h2>❤️ Sentiment Analyser</h2>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;">Enter a sentence. The lexicon-based analyser identifies positive/negative words and handles basic negation.</p>
+      <textarea id="sent-input" rows="3" placeholder="e.g. I did not enjoy this terrible movie at all">I did not enjoy this terrible movie at all</textarea>
+      <button class="run" onclick="runSentiment()">▶ Analyse Sentiment</button>
+    </div>
+    <div class="card" id="sentiment-output" style="display:none;">
+      <div class="grid-2">
+        <div>
+          <h3>Word-Level Analysis</h3>
+          <div id="sent-words" style="font-size:1.05rem;line-height:2.2;"></div>
+        </div>
+        <div>
+          <h3>Result</h3>
+          <div id="sent-badge"></div>
+          <div class="bar-wrap" id="sent-bars" style="margin-top:14px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Sentiment Lexicon Reference</h2>
+      <div class="grid-2">
+        <div>
+          <h3>Positive Words</h3>
+          <div class="chips" id="pos-lexicon"></div>
+        </div>
+        <div>
+          <h3>Negative Words</h3>
+          <div class="chips" id="neg-lexicon"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       6. N-GRAMS
+  ════════════════════════════════════ -->
+  <div id="tab-ngrams" class="section">
+    <div class="card">
+      <h2>🔗 N-Gram Explorer</h2>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;">N-grams capture local word sequences. Unigrams (n=1) = single words; bigrams (n=2) = pairs; trigrams (n=3) = triples.</p>
+      <textarea id="ngram-input" rows="2" placeholder="Enter your sentence">The quick brown fox jumps over the lazy dog</textarea>
+      <div style="display:flex;gap:12px;align-items:center;margin-top:10px;flex-wrap:wrap;">
+        <label style="font-weight:700;font-size:0.88rem;">N =
+          <select id="ngram-n" style="margin-left:6px;padding:6px 10px;border-radius:8px;border:1.5px solid #d0d9ec;font-size:0.88rem;">
+            <option value="1">1 (Unigram)</option>
+            <option value="2" selected>2 (Bigram)</option>
+            <option value="3">3 (Trigram)</option>
+            <option value="4">4 (4-gram)</option>
+          </select>
+        </label>
+        <button class="run" onclick="buildNgrams()">▶ Generate</button>
+      </div>
+    </div>
+    <div class="card" id="ngram-output" style="display:none;">
+      <h2>N-Grams</h2>
+      <div id="ngram-list" class="ngram-list"></div>
+      <div class="info" style="margin-top:12px;" id="ngram-info"></div>
+      <div style="margin-top:14px;">
+        <h3>Frequency Chart</h3>
+        <div class="bar-wrap" id="ngram-bars"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       7. NAMED ENTITY RECOGNITION
+  ════════════════════════════════════ -->
+  <div id="tab-ner" class="section">
+    <div class="card">
+      <h2>🏷️ Named Entity Recognition (NER)</h2>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;">NER identifies and classifies named entities (people, organisations, locations, dates) in text. This demo uses rule-based matching on a known-entity list.</p>
+      <textarea id="ner-input" rows="3">Barack Obama was born in Hawaii and served as President of the United States. He studied at Harvard University and lived in Chicago before moving to Washington on January 20 2009.</textarea>
+      <button class="run" onclick="runNER()">▶ Identify Entities</button>
+    </div>
+    <div class="card" id="ner-output" style="display:none;">
+      <h2>Annotated Text</h2>
+      <div id="ner-result" class="ner-text"></div>
+      <div class="ner-legend" style="margin-top:14px;" id="ner-legend"></div>
+      <div style="margin-top:14px;">
+        <h3>Entity Counts</h3>
+        <div class="bar-wrap" id="ner-bars"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       8. LANGUAGE MODEL
+  ════════════════════════════════════ -->
+  <div id="tab-lm" class="section">
+    <div class="card">
+      <h2>🔮 N-Gram Language Model (Next-Word Prediction)</h2>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;">Type a sentence fragment and click a suggested next word to continue building. The model uses bigram statistics learned from the training corpus below.</p>
+      <div style="margin-bottom:12px;">
+        <h3>Training Corpus</h3>
+        <textarea id="lm-corpus" rows="4">the cat sat on the mat the cat ate the rat the dog sat on the mat the dog ran in the park the park is big and green the cat ran in the park</textarea>
+      </div>
+      <div style="margin-bottom:8px;">
+        <h3>Your Prompt</h3>
+        <input type="text" id="lm-prompt" value="the cat" placeholder="Start typing…">
+      </div>
+      <button class="run" onclick="runLM()">▶ Predict Next Words</button>
+      <button class="secondary" style="margin-top:8px;margin-left:8px;" onclick="document.getElementById('lm-prompt').value='the cat';runLM()">↺ Reset</button>
+    </div>
+    <div class="card" id="lm-output" style="display:none;">
+      <h3>Current Prompt</h3>
+      <div id="lm-current" style="font-size:1.05rem;font-weight:600;padding:8px 12px;background:#f7f9fe;border-radius:8px;margin-bottom:10px;"></div>
+      <h3>Next-Word Suggestions <span style="font-weight:400;font-size:0.8rem;color:var(--muted)">(click to continue)</span></h3>
+      <div class="lm-suggestions" id="lm-suggestions"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       9. EVALUATION METRICS
+  ════════════════════════════════════ -->
+  <div id="tab-metrics" class="section">
+    <div class="card">
+      <h2>📈 Classification Evaluation Metrics</h2>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;">Drag the confusion matrix sliders to see how Precision, Recall, F1, and Accuracy respond.</p>
+      <div class="grid-2">
+        <div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <label style="font-size:0.85rem;font-weight:700;">True Positives (TP): <span id="tp-val">45</span></label>
+              <input type="range" id="tp" min="0" max="100" value="45" oninput="updateMetrics()">
+            </div>
+            <div>
+              <label style="font-size:0.85rem;font-weight:700;">False Positives (FP): <span id="fp-val">10</span></label>
+              <input type="range" id="fp" min="0" max="100" value="10" oninput="updateMetrics()">
+            </div>
+            <div>
+              <label style="font-size:0.85rem;font-weight:700;">False Negatives (FN): <span id="fn-val">15</span></label>
+              <input type="range" id="fn" min="0" max="100" value="15" oninput="updateMetrics()">
+            </div>
+            <div>
+              <label style="font-size:0.85rem;font-weight:700;">True Negatives (TN): <span id="tn-val">50</span></label>
+              <input type="range" id="tn" min="0" max="100" value="50" oninput="updateMetrics()">
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3>Confusion Matrix</h3>
+          <table class="conf">
+            <tr><th></th><th>Pred Pos</th><th>Pred Neg</th></tr>
+            <tr><th>Actual Pos</th><td class="conf-tp" id="cm-tp">45</td><td class="conf-fn" id="cm-fn">15</td></tr>
+            <tr><th>Actual Neg</th><td class="conf-fp" id="cm-fp">10</td><td class="conf-tn" id="cm-tn">50</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="metrics" id="metrics-row"></div>
+      <div class="info" id="metrics-info" style="margin-top:10px;"></div>
+    </div>
+    <div class="card">
+      <h2>Metric Definitions</h2>
+      <div class="grid-2">
+        <div style="font-size:0.87rem;line-height:1.65;">
+          <p><b>Accuracy</b> = (TP + TN) / Total — overall correctness.</p>
+          <p style="margin-top:6px;"><b>Precision</b> = TP / (TP + FP) — of predicted positives, how many are real.</p>
+          <p style="margin-top:6px;"><b>Recall</b> = TP / (TP + FN) — of real positives, how many did we catch.</p>
+          <p style="margin-top:6px;"><b>F1</b> = 2 × Precision × Recall / (Precision + Recall) — harmonic mean.</p>
+        </div>
+        <div style="font-size:0.87rem;line-height:1.65;">
+          <p><b>High Precision, Low Recall:</b> cautious classifier — few false alarms but misses many positives (spam filter).</p>
+          <p style="margin-top:6px;"><b>Low Precision, High Recall:</b> aggressive classifier — catches most positives but noisy (medical screening).</p>
+          <p style="margin-top:6px;"><b>F1</b> balances both — best when classes are imbalanced.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       10. ATTENTION HEATMAP
+  ════════════════════════════════════ -->
+  <div id="tab-attention" class="section">
+    <div class="card">
+      <h2>👁️ Attention Heatmap (Conceptual)</h2>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;">
+        Attention lets a model focus on different words when producing each output word.
+        This conceptual demo shows how each <em>output</em> word (row) attends to each <em>input</em> word (column).
+        Edit the sentences and click Generate to create a randomised illustrative heatmap.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
+        <div>
+          <div style="font-size:0.8rem;font-weight:700;margin-bottom:4px;">Source sentence (encoder input)</div>
+          <input type="text" id="attn-src" value="the cat sat on the mat">
+        </div>
+        <div>
+          <div style="font-size:0.8rem;font-weight:700;margin-bottom:4px;">Target sentence (decoder output)</div>
+          <input type="text" id="attn-tgt" value="le chat était assis sur le tapis">
+        </div>
+      </div>
+      <button class="run" onclick="buildAttention()">▶ Generate Heatmap</button>
+    </div>
+    <div class="card" id="attn-output" style="display:none;">
+      <h2>Attention Weights</h2>
+      <p style="font-size:0.83rem;color:var(--muted);margin-bottom:10px;">Darker colour = higher attention weight. Each row sums to ~1.</p>
+      <div style="overflow-x:auto;">
+        <div id="attn-grid-wrap"></div>
+      </div>
+      <div class="info" style="margin-top:12px;">
+        <b>Note:</b> In real Transformer models, attention weights are learned — this demo uses plausible random values for illustration.
+      </div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<script>
+/* ═══════════════════════════════════════
+   DATA & UTILITIES
+═══════════════════════════════════════ */
+const STOPWORDS = new Set([
+  'i','me','my','myself','we','our','ours','ourselves','you','your','yours',
+  'yourself','he','him','his','himself','she','her','hers','herself','it',
+  'its','itself','they','them','their','theirs','themselves','what','which',
+  'who','whom','this','that','these','those','am','is','are','was','were',
+  'be','been','being','have','has','had','having','do','does','did','doing',
+  'a','an','the','and','but','if','or','because','as','until','while','of',
+  'at','by','for','with','about','against','between','into','through',
+  'during','before','after','above','below','to','from','up','down','in',
+  'out','on','off','over','under','again','further','then','once','here',
+  'there','when','where','why','how','all','both','each','few','more','most',
+  'other','some','such','no','nor','not','only','own','same','so','than',
+  'too','very','s','t','can','will','just','don','should','now','d','ll',
+  'm','o','re','ve','y','ain','aren','couldn','didn','doesn','hadn','hasn',
+  'haven','isn','ma','mightn','mustn','needn','shan','shouldn','wasn',
+  'weren','won','wouldn'
+]);
+
+const POS_WORDS = ['good','great','excellent','love','loved','amazing','wonderful',
+  'fantastic','brilliant','awesome','best','superb','outstanding','perfect',
+  'enjoy','enjoyed','beautiful','happy','fun','nice','pleasant','positive',
+  'impressive','incredible','magnificent','delightful','superb','marvelous'];
+
+const NEG_WORDS = ['bad','terrible','hate','hated','awful','horrible','worst',
+  'poor','disappointing','disgusting','dreadful','atrocious','unpleasant',
+  'boring','dull','mediocre','inferior','useless','waste','frustrating',
+  'annoying','miserable','pathetic','ridiculous','failed','failure'];
+
+const NEGATORS = new Set(['not','no','never','neither','nor','barely','hardly',
+  'scarcely','nothing','nobody','nowhere','neither','without',"don't","doesn't",
+  "didn't","wasn't","isn't","aren't","can't","won't","wouldn't"]);
+
+function tokenize(text) {
+  return text.toLowerCase().replace(/[^a-z0-9'\s]/g, '').split(/\s+/).filter(Boolean);
+}
+
+function stem(word) {
+  // Porter-ish mini stemmer
+  word = word.replace(/ies$/,'y').replace(/ied$/,'y');
+  word = word.replace(/ness$/,'').replace(/ment$/,'').replace(/ful$/,'')
+             .replace(/tion$/,'t').replace(/ating$/,'ate').replace(/ing$/,'')
+             .replace(/ness$/,'').replace(/edly$/,'').replace(/ly$/,'')
+             .replace(/er$/,'').replace(/est$/,'').replace(/ed$/,'')
+             .replace(/s$/, w => w.length > 2 ? '' : 's');
+  return word || word;
+}
+
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+/* ═══════════════════════════════════════
+   1. PREPROCESSING PIPELINE
+═══════════════════════════════════════ */
+function runPipeline() {
+  const raw = document.getElementById('prep-input').value.trim();
+  if (!raw) return;
+  const doStem = document.getElementById('do-stem').checked;
+  const doStop = document.getElementById('do-stop').checked;
+
+  const step1 = raw;
+  const tokens = raw.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+  const step2 = tokens;
+  const step3 = doStop ? tokens.filter(t => !STOPWORDS.has(t)) : tokens;
+  const step4 = doStem ? step3.map(stem) : step3;
+
+  const container = document.getElementById('pipeline-steps');
+  container.innerHTML = '';
+
+  const addStep = (label, content, css='') => {
+    const div = document.createElement('div');
+    div.className = 'step';
+    div.innerHTML = `<div class="step-label">${label}</div><div class="step-value ${css}">${content}</div>`;
+    container.appendChild(div);
+  };
+
+  addStep('Original', escHtml(step1));
+  addStep('Lowercase &amp; Remove punct.', buildChips(step2, 'chip-default'));
+
+  const removedCount = step2.length - step3.length;
+  const stopChips = step2.map(t =>
+    `<span class="chip ${STOPWORDS.has(t) && doStop ? 'chip-stop' : 'chip-keep'}">${escHtml(t)}</span>`
+  ).join('');
+  addStep('Stopword Removal', stopChips + `<span style="font-size:0.78rem;color:var(--muted);margin-left:8px;">${removedCount} removed</span>`);
+
+  if (doStem) {
+    const stemChips = step3.map((t,i) => {
+      const s = stem(t);
+      return `<span class="chip chip-stem" title="${t} → ${s}">${s}</span>`;
+    }).join('');
+    addStep('Stemming', stemChips);
+  }
+
+  addStep('Final Tokens', buildChips(step4, 'chip-keep'), 'highlight');
+
+  document.getElementById('pipeline-output').style.display = 'block';
+}
+
+function buildChips(tokens, cls) {
+  return tokens.map(t => `<span class="chip ${cls}">${escHtml(t)}</span>`).join(' ');
+}
+
+// Render stopword chips
+window.addEventListener('DOMContentLoaded', () => {
+  const sw = [...STOPWORDS].slice(0, 60).sort();
+  document.getElementById('stopword-chips').innerHTML =
+    sw.map(w => `<span class="chip chip-stop">${w}</span>`).join('');
+  renderLexicons();
+  updateMetrics();
+});
+
+/* ═══════════════════════════════════════
+   2. BAG-OF-WORDS
+═══════════════════════════════════════ */
+function buildBoW() {
+  const docs = ['bow-d1','bow-d2','bow-d3','bow-d4']
+    .map(id => document.getElementById(id).value.trim())
+    .filter(Boolean)
+    .map(d => tokenize(d));
+
+  const vocab = [...new Set(docs.flat())].sort();
+  const matrix = docs.map(doc => {
+    const freq = {};
+    doc.forEach(t => freq[t] = (freq[t]||0)+1);
+    return vocab.map(w => freq[w]||0);
+  });
+
+  const table = document.getElementById('bow-table');
+  let html = '<tr><th>Doc</th>' + vocab.map(w => `<th>${escHtml(w)}</th>`).join('') + '</tr>';
+  matrix.forEach((row, i) => {
+    html += `<tr><td class="doc">Doc ${i+1}</td>` +
+      row.map(v => {
+        const cls = v >= 2 ? 'val-high' : v === 1 ? 'val-med' : 'val-zero';
+        return `<td class="${cls}">${v}</td>`;
+      }).join('') + '</tr>';
+  });
+  table.innerHTML = html;
+
+  const total = matrix.reduce((s, r) => s + r.length, 0);
+  const zeros = matrix.reduce((s, r) => s + r.filter(v => v===0).length, 0);
+  document.getElementById('bow-vocab-size').textContent = vocab.length;
+  document.getElementById('bow-sparsity').textContent = Math.round(zeros/total*100);
+  document.getElementById('bow-output').style.display = 'block';
+}
+
+/* ═══════════════════════════════════════
+   3. TF-IDF
+═══════════════════════════════════════ */
+function buildTFIDF() {
+  const rawDocs = ['tfidf-d1','tfidf-d2','tfidf-d3','tfidf-d4']
+    .map(id => document.getElementById(id).value.trim())
+    .filter(Boolean);
+  const docs = rawDocs.map(tokenize);
+  const N = docs.length;
+  const vocab = [...new Set(docs.flat())].sort();
+
+  const tf = docs.map(doc => {
+    const f = {};
+    doc.forEach(t => f[t] = (f[t]||0)+1);
+    return vocab.map(w => (f[w]||0) / doc.length);
+  });
+
+  const df = {};
+  vocab.forEach(w => {
+    df[w] = docs.filter(d => d.includes(w)).length;
+  });
+  const idf = {};
+  vocab.forEach(w => { idf[w] = Math.log(N / df[w]); });
+
+  const tfidf = tf.map(row => row.map((t, i) => t * idf[vocab[i]]));
+
+  const container = document.getElementById('tfidf-panels');
+  container.innerHTML = '';
+  tfidf.forEach((row, di) => {
+    const sorted = vocab.map((w,i) => ({w, s: row[i]}))
+      .filter(x => x.s > 0)
+      .sort((a,b) => b.s - a.s)
+      .slice(0, 12);
+
+    const maxS = sorted[0]?.s || 1;
+    const div = document.createElement('div');
+    div.style.marginBottom = '14px';
+    div.innerHTML = `<div style="font-weight:700;font-size:0.88rem;margin-bottom:8px;">Document ${di+1}: <em>"${escHtml(rawDocs[di])}"</em></div>
+      <div class="tfidf-cells">${sorted.map(({w,s}) => {
+        const intensity = s / maxS;
+        const bg = `hsl(${165 - intensity*40},${50+intensity*40}%,${90-intensity*25}%)`;
+        const fg = intensity > 0.5 ? '#065f46' : '#374151';
+        return `<div class="tfidf-cell" style="background:${bg};color:${fg}">
+          <span class="tfidf-word">${escHtml(w)}</span>
+          <span class="tfidf-score">${s.toFixed(3)}</span>
+        </div>`;
+      }).join('')}</div>`;
+    container.appendChild(div);
+  });
+  document.getElementById('tfidf-output').style.display = 'block';
+}
+
+/* ═══════════════════════════════════════
+   4. COSINE SIMILARITY
+═══════════════════════════════════════ */
+function calcCosine() {
+  const a = tokenize(document.getElementById('cos-a').value);
+  const b = tokenize(document.getElementById('cos-b').value);
+  const vocab = [...new Set([...a, ...b])].sort();
+
+  const fa = {}, fb = {};
+  a.forEach(t => fa[t]=(fa[t]||0)+1);
+  b.forEach(t => fb[t]=(fb[t]||0)+1);
+
+  const va = vocab.map(w => fa[w]||0);
+  const vb = vocab.map(w => fb[w]||0);
+
+  const dot = va.reduce((s,v,i) => s + v*vb[i], 0);
+  const normA = Math.sqrt(va.reduce((s,v) => s+v*v, 0));
+  const normB = Math.sqrt(vb.reduce((s,v) => s+v*v, 0));
+  const cos = (normA && normB) ? dot / (normA * normB) : 0;
+
+  const shared = vocab.filter(w => fa[w] && fb[w]);
+  const onlyA = vocab.filter(w => fa[w] && !fb[w]);
+  const onlyB = vocab.filter(w => !fa[w] && fb[w]);
+
+  const wrapDiv = document.getElementById('cos-words');
+  wrapDiv.innerHTML = `
+    <div style="font-size:0.82rem;font-weight:700;margin-bottom:4px;color:var(--accent);">Shared (${shared.length})</div>
+    <div class="chips">${shared.map(w=>`<span class="chip chip-keep">${w}</span>`).join('')||'<em>none</em>'}</div>
+    <div style="font-size:0.82rem;font-weight:700;margin:8px 0 4px;color:var(--blue);">Only in A (${onlyA.length})</div>
+    <div class="chips">${onlyA.map(w=>`<span class="chip chip-stem">${w}</span>`).join('')||'<em>none</em>'}</div>
+    <div style="font-size:0.82rem;font-weight:700;margin:8px 0 4px;color:var(--orange);">Only in B (${onlyB.length})</div>
+    <div class="chips">${onlyB.map(w=>`<span class="chip chip-neg">${w}</span>`).join('')||'<em>none</em>'}</div>`;
+
+  const cls = cos > 0.6 ? 'sim-high' : cos > 0.3 ? 'sim-mid' : 'sim-low';
+  const label = cos > 0.6 ? '🟢 High similarity' : cos > 0.3 ? '🟡 Moderate' : '🔴 Low similarity';
+  document.getElementById('cos-result').innerHTML =
+    `<div class="sim-result ${cls}">${cos.toFixed(4)}</div>
+     <div style="text-align:center;font-size:0.88rem;font-weight:700;margin-top:6px;">${label}</div>`;
+
+  document.getElementById('cos-explanation').innerHTML =
+    `<b>Dot product:</b> ${dot} &nbsp;|&nbsp; <b>|A|:</b> ${normA.toFixed(3)} &nbsp;|&nbsp; <b>|B|:</b> ${normB.toFixed(3)}<br>
+     <b>Formula:</b> cos(θ) = dot(A,B) / (|A|·|B|) = ${dot} / (${normA.toFixed(3)} × ${normB.toFixed(3)}) = <b>${cos.toFixed(4)}</b>`;
+
+  drawCosineCanvas(cos);
+  document.getElementById('cosine-output').style.display = 'block';
+}
+
+function drawCosineCanvas(cos) {
+  const canvas = document.getElementById('cos-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,260,180);
+  const cx=100, cy=140, r=90;
+  const angle = Math.acos(Math.max(-1,Math.min(1,cos)));
+
+  ctx.strokeStyle='#e3e9f5'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.arc(cx,cy,r,Math.PI,2*Math.PI,false); ctx.stroke();
+
+  // Vector A (horizontal)
+  ctx.strokeStyle='#2563eb'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+r,cy);
+  ctx.stroke();
+  ctx.fillStyle='#2563eb'; ctx.font='bold 12px sans-serif';
+  ctx.fillText('A',cx+r+6,cy+4);
+
+  // Vector B
+  const bx = cx + r*Math.cos(-angle), by = cy + r*Math.sin(-angle);
+  ctx.strokeStyle='#0f766e'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(bx,by);
+  ctx.stroke();
+  ctx.fillStyle='#0f766e';
+  ctx.fillText('B', bx + (bx>cx?6:-16), by-4);
+
+  // Angle arc
+  ctx.strokeStyle='#ea580c'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(cx,cy,28,(-angle),0,false); ctx.stroke();
+  ctx.fillStyle='#ea580c'; ctx.font='11px sans-serif';
+  ctx.fillText('θ='+Math.round(angle*180/Math.PI)+'°', cx+32, cy-8);
+
+  // Label
+  ctx.fillStyle='#5e6b82'; ctx.font='11px sans-serif';
+  ctx.fillText('cos(θ) = '+cos.toFixed(3), cx-20, cy+20);
+}
+
+/* ═══════════════════════════════════════
+   5. SENTIMENT
+═══════════════════════════════════════ */
+function renderLexicons() {
+  document.getElementById('pos-lexicon').innerHTML =
+    POS_WORDS.map(w=>`<span class="chip chip-pos">${w}</span>`).join('');
+  document.getElementById('neg-lexicon').innerHTML =
+    NEG_WORDS.map(w=>`<span class="chip chip-stop">${w}</span>`).join('');
+}
+
+function runSentiment() {
+  const raw = document.getElementById('sent-input').value;
+  const tokens = raw.toLowerCase().split(/\s+/).map(t=>t.replace(/[^a-z']/g,''));
+  let pos = 0, neg = 0;
+  let negated = false;
+  const annotated = tokens.map(t => {
+    if (NEGATORS.has(t)) { negated = true; return `<span class="chip chip-neg" title="negator">${escHtml(t)}</span>`; }
+    if (POS_WORDS.includes(t)) {
+      if (negated) { neg++; negated=false; return `<span class="chip chip-stop" title="negated positive">${escHtml(t)}̶</span>`; }
+      pos++; return `<span class="chip chip-pos">${escHtml(t)}</span>`;
+    }
+    if (NEG_WORDS.includes(t)) {
+      if (negated) { pos++; negated=false; return `<span class="chip chip-keep" title="negated negative">${escHtml(t)}̶</span>`; }
+      neg++; return `<span class="chip chip-stop">${escHtml(t)}</span>`;
+    }
+    negated = false;
+    return `<span style="color:var(--ink)">${escHtml(t)}</span>`;
+  });
+
+  document.getElementById('sent-words').innerHTML = annotated.join(' ');
+
+  const total = pos + neg;
+  const score = total > 0 ? (pos - neg) / total : 0;
+  let label, cls;
+  if (score > 0.1) { label = '😊 Positive'; cls = 'badge-pos'; }
+  else if (score < -0.1) { label = '😞 Negative'; cls = 'badge-neg'; }
+  else { label = '😐 Neutral'; cls = 'badge-neu'; }
+
+  document.getElementById('sent-badge').innerHTML =
+    `<span class="sentiment-badge ${cls}">${label}</span>
+     <div style="font-size:0.83rem;color:var(--muted);margin-top:8px;">Score: ${score.toFixed(2)}</div>`;
+
+  const maxC = Math.max(pos, neg, 1);
+  document.getElementById('sent-bars').innerHTML = `
+    <div class="bar-row">
+      <div class="bar-label">Positive</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pos/maxC*100}%;background:#16a34a;"></div></div>
+      <div class="bar-count">${pos}</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Negative</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${neg/maxC*100}%;background:#dc2626;"></div></div>
+      <div class="bar-count">${neg}</div>
+    </div>`;
+
+  document.getElementById('sentiment-output').style.display = 'block';
+}
+
+/* ═══════════════════════════════════════
+   6. N-GRAMS
+═══════════════════════════════════════ */
+function buildNgrams() {
+  const tokens = tokenize(document.getElementById('ngram-input').value);
+  const n = parseInt(document.getElementById('ngram-n').value);
+  const grams = [];
+  for (let i = 0; i <= tokens.length - n; i++) {
+    grams.push(tokens.slice(i, i+n).join(' '));
+  }
+  const freq = {};
+  grams.forEach(g => freq[g] = (freq[g]||0)+1);
+  const sorted = Object.entries(freq).sort((a,b)=>b[1]-a[1]);
+
+  document.getElementById('ngram-list').innerHTML =
+    grams.map((g,i) => `<div class="ngram-item" title="occurrence ${i+1}">${escHtml(g)}</div>`).join('');
+
+  document.getElementById('ngram-info').innerHTML =
+    `<b>${grams.length}</b> ${n}-grams generated from <b>${tokens.length}</b> tokens &nbsp;|&nbsp; <b>${sorted.length}</b> unique`;
+
+  const maxF = sorted[0]?.[1] || 1;
+  document.getElementById('ngram-bars').innerHTML = sorted.slice(0,12).map(([g,f]) =>
+    `<div class="bar-row">
+      <div class="bar-label" style="min-width:160px;font-family:monospace;">"${escHtml(g)}"</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${f/maxF*100}%;background:#7c3aed;"></div></div>
+      <div class="bar-count">${f}</div>
+    </div>`).join('');
+
+  document.getElementById('ngram-output').style.display = 'block';
+}
+
+/* ═══════════════════════════════════════
+   7. NER
+═══════════════════════════════════════ */
+const NER_DICT = {
+  // PERSON
+  'barack obama':'PERSON','obama':'PERSON','donald trump':'PERSON',
+  'elon musk':'PERSON','albert einstein':'PERSON','marie curie':'PERSON',
+  'alan turing':'PERSON','tim cook':'PERSON','jeff bezos':'PERSON',
+  // ORG
+  'harvard university':'ORG','stanford university':'ORG',
+  'united states':'ORG','united nations':'ORG','google':'ORG',
+  'apple':'ORG','amazon':'ORG','openai':'ORG','microsoft':'ORG',
+  // LOC
+  'hawaii':'LOC','chicago':'LOC','washington':'LOC','new york':'LOC',
+  'london':'LOC','paris':'LOC','berlin':'LOC','tokyo':'LOC',
+  'california':'LOC','texas':'LOC',
+  // DATE
+  'january 20 2009':'DATE','january':'DATE','february':'DATE','march':'DATE',
+  'april':'DATE','may':'DATE','june':'DATE','july':'DATE','august':'DATE',
+  'september':'DATE','october':'DATE','november':'DATE','december':'DATE',
+  '2009':'DATE','2020':'DATE','2021':'DATE','2022':'DATE','2023':'DATE','2024':'DATE','2025':'DATE','2026':'DATE'
+};
+
+const NER_COLORS = { PERSON:'ner-PERSON', ORG:'ner-ORG', LOC:'ner-LOC', DATE:'ner-DATE', MISC:'ner-MISC' };
+const NER_LABELS = { PERSON:'👤 Person', ORG:'🏢 Organisation', LOC:'📍 Location', DATE:'📅 Date', MISC:'❓ Misc' };
+
+function runNER() {
+  const text = document.getElementById('ner-input').value;
+  const lower = text.toLowerCase();
+  const spans = []; // {start, end, label}
+
+  // Try longest match first
+  Object.entries(NER_DICT).sort((a,b) => b[0].length - a[0].length).forEach(([ent, lbl]) => {
+    let idx = 0;
+    while (true) {
+      const pos = lower.indexOf(ent, idx);
+      if (pos === -1) break;
+      // check not already covered
+      if (!spans.some(s => pos < s.end && pos + ent.length > s.start)) {
+        spans.push({ start: pos, end: pos + ent.length, label: lbl, text: text.slice(pos, pos + ent.length) });
+      }
+      idx = pos + ent.length;
+    }
+  });
+  spans.sort((a,b) => a.start - b.start);
+
+  // Build annotated HTML
+  let html = '', cursor = 0;
+  spans.forEach(s => {
+    if (s.start > cursor) html += escHtml(text.slice(cursor, s.start));
+    html += `<span class="ner-span ${NER_COLORS[s.label]}" title="${s.label}">${escHtml(s.text)}</span>`;
+    cursor = s.end;
+  });
+  if (cursor < text.length) html += escHtml(text.slice(cursor));
+  document.getElementById('ner-result').innerHTML = html || '(no text)';
+
+  // Legend
+  const types = [...new Set(spans.map(s=>s.label))];
+  document.getElementById('ner-legend').innerHTML =
+    types.map(t => `<span class="ner-tag ${NER_COLORS[t]}">${NER_LABELS[t]||t}</span>`).join('');
+
+  // Bar chart
+  const counts = {};
+  spans.forEach(s => counts[s.label] = (counts[s.label]||0)+1);
+  const maxC = Math.max(...Object.values(counts),1);
+  document.getElementById('ner-bars').innerHTML =
+    Object.entries(counts).map(([lbl,c]) => `
+      <div class="bar-row">
+        <div class="bar-label">${NER_LABELS[lbl]||lbl}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${c/maxC*100}%;background:#0f766e;"></div></div>
+        <div class="bar-count">${c}</div>
+      </div>`).join('');
+
+  document.getElementById('ner-output').style.display = 'block';
+}
+
+/* ═══════════════════════════════════════
+   8. LANGUAGE MODEL
+═══════════════════════════════════════ */
+function runLM() {
+  const corpus = tokenize(document.getElementById('lm-corpus').value);
+  const prompt = document.getElementById('lm-prompt').value.trim();
+  const promptTokens = tokenize(prompt);
+  const lastWord = promptTokens[promptTokens.length - 1] || '';
+
+  // Build bigram counts
+  const bigrams = {};
+  for (let i = 0; i < corpus.length - 1; i++) {
+    const key = corpus[i];
+    const next = corpus[i+1];
+    if (!bigrams[key]) bigrams[key] = {};
+    bigrams[key][next] = (bigrams[key][next]||0)+1;
+  }
+
+  const suggestions = bigrams[lastWord] || {};
+  const total = Object.values(suggestions).reduce((s,v)=>s+v,0) || 1;
+  const sorted = Object.entries(suggestions).sort((a,b)=>b[1]-a[1]).slice(0,8);
+
+  document.getElementById('lm-current').textContent = prompt;
+  document.getElementById('lm-suggestions').innerHTML = sorted.length
+    ? sorted.map(([w,c]) =>
+        `<div class="lm-word" onclick="appendWord('${w}')">${w}<span class="prob">${(c/total*100).toFixed(0)}%</span></div>`
+      ).join('')
+    : '<em style="color:var(--muted);font-size:0.88rem;">No suggestions — try a different last word.</em>';
+
+  document.getElementById('lm-output').style.display = 'block';
+}
+
+function appendWord(word) {
+  const prompt = document.getElementById('lm-prompt');
+  prompt.value = (prompt.value.trim() + ' ' + word).trim();
+  runLM();
+}
+
+/* ═══════════════════════════════════════
+   9. EVALUATION METRICS
+═══════════════════════════════════════ */
+function updateMetrics() {
+  const tp = +document.getElementById('tp').value;
+  const fp = +document.getElementById('fp').value;
+  const fn = +document.getElementById('fn').value;
+  const tn = +document.getElementById('tn').value;
+
+  document.getElementById('tp-val').textContent = tp;
+  document.getElementById('fp-val').textContent = fp;
+  document.getElementById('fn-val').textContent = fn;
+  document.getElementById('tn-val').textContent = tn;
+  document.getElementById('cm-tp').textContent = tp;
+  document.getElementById('cm-fp').textContent = fp;
+  document.getElementById('cm-fn').textContent = fn;
+  document.getElementById('cm-tn').textContent = tn;
+
+  const total = tp+fp+fn+tn || 1;
+  const prec = tp/(tp+fp||1);
+  const rec  = tp/(tp+fn||1);
+  const f1   = prec+rec > 0 ? 2*prec*rec/(prec+rec) : 0;
+  const acc  = (tp+tn)/total;
+
+  const fmt = v => (v*100).toFixed(1)+'%';
+  document.getElementById('metrics-row').innerHTML = [
+    {val: fmt(acc),  lbl: 'Accuracy',  color: '#2563eb'},
+    {val: fmt(prec), lbl: 'Precision', color: '#0f766e'},
+    {val: fmt(rec),  lbl: 'Recall',    color: '#ea580c'},
+    {val: fmt(f1),   lbl: 'F1 Score',  color: '#7c3aed'},
+  ].map(m => `<div class="metric-box">
+    <div class="val" style="color:${m.color}">${m.val}</div>
+    <div class="lbl">${m.lbl}</div>
+  </div>`).join('');
+
+  let note = '';
+  if (prec < 0.5 && rec < 0.5) note = '⚠️ Both precision and recall are low — poor classifier overall.';
+  else if (prec > 0.8 && rec < 0.5) note = '🎯 High precision, low recall — model is cautious but misses many positives.';
+  else if (prec < 0.5 && rec > 0.8) note = '🔍 Low precision, high recall — model finds most positives but generates many false alarms.';
+  else if (f1 > 0.8) note = '✅ Strong F1 — good balance of precision and recall.';
+  else note = `Balance check: ${prec > rec ? 'precision > recall (more cautious)' : 'recall > precision (more aggressive)'}.`;
+  document.getElementById('metrics-info').innerHTML = note;
+}
+
+/* ═══════════════════════════════════════
+   10. ATTENTION HEATMAP
+═══════════════════════════════════════ */
+function buildAttention() {
+  const src = tokenize(document.getElementById('attn-src').value);
+  const tgt = document.getElementById('attn-tgt').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+
+  // Generate softmax-normalised random weights with diagonal bias (alignment)
+  const weights = tgt.map((_, i) =>
+    softmax(src.map((_, j) => {
+      const diag = Math.exp(-0.8 * Math.abs(j / src.length - i / tgt.length));
+      return diag + Math.random() * 0.3;
+    }))
+  );
+
+  // Header row
+  const wrap = document.getElementById('attn-grid-wrap');
+  let html = '<div style="display:flex;gap:2px;margin-bottom:4px;">';
+  html += '<div style="width:110px;"></div>';
+  src.forEach(w => html += `<div class="attn-header">${escHtml(w)}</div>`);
+  html += '</div>';
+
+  // Data rows
+  tgt.forEach((tw, i) => {
+    html += '<div class="attn-row">';
+    html += `<div style="font-size:0.75rem;font-weight:700;width:110px;display:flex;align-items:center;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(tw)}</div>`;
+    weights[i].forEach(w => {
+      const a = Math.round(w * 255);
+      const bg = `rgb(${255-Math.round(w*160)},${255-Math.round(w*80)},${255-Math.round(w*20)})`;
+      const fg = w > 0.4 ? '#fff' : '#374151';
+      html += `<div class="attn-cell" style="background:${bg};color:${fg};">${w.toFixed(2)}</div>`;
+    });
+    html += '</div>';
+  });
+
+  wrap.innerHTML = html;
+  document.getElementById('attn-output').style.display = 'block';
+}
+
+function softmax(arr) {
+  const max = Math.max(...arr);
+  const exp = arr.map(v => Math.exp(v - max));
+  const sum = exp.reduce((a,b) => a+b, 0);
+  return exp.map(v => v/sum);
+}
+
+/* ═══════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════ */
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

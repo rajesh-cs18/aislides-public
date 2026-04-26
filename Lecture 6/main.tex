@@ -1,0 +1,393 @@
+\documentclass[10pt]{beamer}
+
+% --- Modern Theme ---
+\usetheme{metropolis}
+\usecolortheme{default}
+\setbeamercolor{background canvas}{bg=white}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[scale=2]{ccicons}
+\usepackage{pgfplots}
+\usepgfplotslibrary{dateplot}
+\usepackage{xspace}
+
+% --- Title Information ---
+\title{Foundations of Artificial Intelligence}
+\subtitle{Part VI: Introduction to Neural Networks}
+\institute{Department of Computer Science}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}{Lecture Roadmap}
+    \setbeamertemplate{section in toc}[sections numbered]
+    \tableofcontents[hideallsubsections]
+\end{frame}
+
+\begin{frame}{Learning Objectives}
+    By the end of this lecture, you should be able to:
+    \begin{itemize}
+        \item Describe the biological inspiration behind artificial neural networks.
+        \item Define a perceptron and apply the perceptron learning rule.
+        \item Distinguish single-layer from multilayer networks and explain why hidden layers matter.
+        \item Explain the forward pass, loss functions, and training loop conceptually.
+        \item Articulate what backpropagation does and how the chain rule makes it efficient.
+    \end{itemize}
+\end{frame}
+
+\section{Biological Inspiration}
+
+\begin{frame}{Why Neural Networks?}
+    Neural networks represent a shift from symbolic AI to learning from data.
+
+    \vspace{0.2cm}
+    \textbf{Key motivations:}
+    \begin{itemize}
+        \item Brain-inspired: learning through example, adaptability.
+        \item Universal approximators: can learn any function (given enough capacity).
+        \item Powerful for high-dimensional data (images, audio, text).
+        \item Foundation for deep learning and modern AI.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textit{Conceptual goal:} Understand how neurons work together to learn patterns.
+\end{frame}
+
+\begin{frame}{The Biological Neuron}
+    \textbf{Structure:}
+    \begin{itemize}
+        \item \textbf{Dendrites:} Receive signals from other neurons.
+        \item \textbf{Cell body (soma):} Integrates incoming signals.
+        \item \textbf{Axon:} Transmits signal to other neurons.
+        \item \textbf{Synapses:} Junctions where signals pass; strength varies through learning.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Key insight:} Learning means adjusting synaptic weights through experience.
+
+    \vspace{0.2cm}
+    \textbf{Artificial simplification:}
+    \begin{itemize}
+        \item Inputs $\leftrightarrow$ dendrites
+        \item Weights $\leftrightarrow$ synaptic strengths
+        \item Activation function $\leftrightarrow$ firing threshold
+        \item Output $\leftrightarrow$ axon signal
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{From Neurons to Networks}
+    A single neuron is too simple to be useful alone.
+
+    \vspace{0.2cm}
+    \textbf{Scale in biology:}
+    \begin{itemize}
+        \item Human brain: $\sim$86 billion neurons.
+        \item Each neuron connects to thousands of others.
+        \item Intelligence emerges from massive, structured connectivity.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Scale in artificial networks:}
+    \begin{itemize}
+        \item Layers of artificial neurons organised in parallel.
+        \item Early networks: tens of neurons.
+        \item Modern LLMs: billions of parameters.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textit{The architecture and learning algorithm matter as much as size.}
+\end{frame}
+
+\section{The Perceptron}
+
+\begin{frame}{The Perceptron}
+    \textbf{Simplest artificial neuron (Rosenblatt, 1958):}
+    \[
+        \text{output} = \begin{cases}
+            1 & \text{if } \displaystyle\sum_i w_i x_i + b \geq 0 \\
+            0 & \text{otherwise}
+        \end{cases}
+    \]
+
+    \vspace{0.2cm}
+    \textbf{Components:}
+    \begin{itemize}
+        \item \textbf{Inputs} $x_1, \ldots, x_n$: feature values.
+        \item \textbf{Weights} $w_1, \ldots, w_n$: importance of each feature (learned).
+        \item \textbf{Bias} $b$: shifts the decision threshold.
+        \item \textbf{Activation:} step function (outputs 0 or 1).
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Geometric view:} The perceptron defines a \emph{hyperplane} that separates two classes.
+\end{frame}
+
+\begin{frame}{Perceptron Learning Rule}
+    \textbf{How does a perceptron learn?}
+
+    \vspace{0.2cm}
+    \textbf{Algorithm:}
+    \begin{enumerate}
+        \item Initialise weights $w_i$ and bias $b$ to small random values.
+        \item For each training example $(x, y)$:
+        \begin{itemize}
+            \item Compute prediction: $\hat{y} = \text{step}\!\left(\sum_i w_i x_i + b\right)$
+            \item If $\hat{y} \neq y$ (wrong):
+            \[
+                w_i \;\gets\; w_i + \alpha\,(y - \hat{y})\,x_i, \quad b \gets b + \alpha\,(y-\hat{y})
+            \]
+            where $\alpha > 0$ is the \emph{learning rate}.
+        \end{itemize}
+        \item Repeat until convergence (or max epochs).
+    \end{enumerate}
+
+    \vspace{0.2cm}
+    \textbf{Key idea:} Nudge weights toward correct classification on each mistake.
+\end{frame}
+
+\begin{frame}{Perceptron Limitations: The XOR Problem}
+    \textbf{Fatal limitation:} Perceptrons can only learn \textbf{linearly separable} patterns.
+
+    \vspace{0.2cm}
+    \textbf{XOR truth table:}
+    \small
+    \begin{tabularx}{0.6\textwidth}{c c c}
+        \toprule
+        $x_1$ & $x_2$ & $x_1 \oplus x_2$ \\
+        \midrule
+        0 & 0 & 0 \\
+        0 & 1 & 1 \\
+        1 & 0 & 1 \\
+        1 & 1 & 0 \\
+        \bottomrule
+    \end{tabularx}
+
+    \normalsize
+    \vspace{0.2cm}
+    No single straight line can separate the two classes.
+
+    \vspace{0.2cm}
+    \textbf{Impact (1969):} Minsky \& Papert's analysis caused the first ``AI winter'' for neural nets.
+
+    \vspace{0.2cm}
+    \textbf{Solution:} Stack multiple perceptrons into a \emph{multilayer network}.
+\end{frame}
+
+\section{Multilayer Neural Networks}
+
+\begin{frame}{Multilayer Network Architecture}
+    \textbf{Three types of layers:}
+    \begin{itemize}
+        \item \textbf{Input layer:} Raw feature values (no computation).
+        \item \textbf{Hidden layer(s):} Learn intermediate representations.
+        \item \textbf{Output layer:} Produces final prediction.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Why hidden layers?}
+    \begin{itemize}
+        \item Stacking linear functions is still linear --- no gain.
+        \item Non-linear activation functions break linearity at each layer.
+        \item Hidden layers learn progressively abstract features.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Depth vs. width:}
+    \begin{itemize}
+        \item \emph{Deep} network: many layers (complex hierarchical features).
+        \item \emph{Wide} network: many units per layer (more capacity per layer).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Activation Functions}
+    \textbf{Purpose:} Introduce non-linearity between layers.
+
+    \vspace{0.2cm}
+    \textbf{Common choices:}
+    \begin{itemize}
+        \item \textbf{Step:} $\mathbf{1}[z \geq 0]$ --- original perceptron; not differentiable.
+        \item \textbf{Sigmoid:} $\sigma(z) = \dfrac{1}{1+e^{-z}}$ --- smooth, range $(0,1)$.
+        \item \textbf{Tanh:} $\tanh(z)$ --- symmetric around 0, range $(-1, 1)$.
+        \item \textbf{ReLU:} $\max(0, z)$ --- simple, fast; default in modern networks.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Why differentiability matters:} Gradient-based training requires computing $\frac{d}{dz}[\text{activation}]$.
+
+    \vspace{0.2cm}
+    \textit{ReLU's simplicity and avoidance of vanishing gradients make it the go-to choice.}
+\end{frame}
+
+\begin{frame}{Forward Pass}
+    \textbf{Goal:} Compute the network's output given an input.
+
+    \vspace{0.2cm}
+    For layer $l$:
+    \[
+        z^{(l)} = W^{(l)}\, a^{(l-1)} + b^{(l)}, \qquad a^{(l)} = \sigma\!\left(z^{(l)}\right)
+    \]
+    where $W^{(l)}, b^{(l)}$ are the weight matrix and bias, $a^{(l)}$ is the layer output.
+
+    \vspace{0.2cm}
+    \textbf{Loss function:} Measures how wrong the prediction is.
+    \begin{itemize}
+        \item \textbf{Regression} (MSE): $L = \dfrac{1}{m}\displaystyle\sum_i (y_i - \hat{y}_i)^2$
+        \item \textbf{Classification} (cross-entropy):
+        $L = -\dfrac{1}{m}\displaystyle\sum_i\bigl[y_i \log \hat{y}_i + (1-y_i)\log(1-\hat{y}_i)\bigr]$
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Goal of training:} Minimise $L$ over all training examples.
+\end{frame}
+
+\section{Backpropagation}
+
+\begin{frame}{The Training Problem}
+    \textbf{Challenge:} We have weights across many layers. How do we know which weights to change and by how much?
+
+    \vspace{0.3cm}
+    \textbf{Gradient descent} updates weights in the direction that reduces loss:
+    \[
+        w \;\gets\; w - \alpha\,\frac{\partial L}{\partial w}
+    \]
+    where $\alpha$ is the \emph{learning rate}.
+
+    \vspace{0.3cm}
+    \textbf{Problem:} Computing $\frac{\partial L}{\partial w}$ for every weight in a deep network is expensive if done naively.
+
+    \vspace{0.2cm}
+    \textbf{Solution:} \textbf{Backpropagation} --- efficiently compute all gradients in a single backward pass using the chain rule.
+\end{frame}
+
+\begin{frame}{Backpropagation: Conceptual Overview}
+    \textbf{Four steps:}
+    \begin{enumerate}
+        \item \textbf{Forward pass:} Compute predictions and loss $L$.
+        \item \textbf{Output gradient:} Compute $\frac{\partial L}{\partial \hat{y}}$ at the output layer.
+        \item \textbf{Backward pass:} Propagate error signals layer-by-layer \emph{backward} through the network.
+        \item \textbf{Weight update:} Adjust every weight $w \gets w - \alpha\,\frac{\partial L}{\partial w}$.
+    \end{enumerate}
+
+    \vspace{0.2cm}
+    \textbf{Key property:} Each layer only needs the gradient from the layer \emph{above} it --- no redundant computation.
+
+    \vspace{0.2cm}
+    \textit{Backprop makes training deep networks computationally feasible.}
+\end{frame}
+
+\begin{frame}{Backpropagation: The Chain Rule}
+    \textbf{Core mechanism:} The chain rule of calculus.
+
+    \vspace{0.2cm}
+    Example --- gradient w.r.t.\ weights in layer 1 of a 2-layer network:
+    \[
+        \frac{\partial L}{\partial W^{(1)}} =
+        \underbrace{\frac{\partial L}{\partial \hat{y}}}_{\text{output error}}
+        \cdot
+        \underbrace{\frac{\partial \hat{y}}{\partial z^{(2)}}}_{\sigma'}
+        \cdot
+        \underbrace{\frac{\partial z^{(2)}}{\partial a^{(1)}}}_{{W^{(2)}}}
+        \cdot
+        \underbrace{\frac{\partial a^{(1)}}{\partial z^{(1)}}}_{\sigma'}
+        \cdot
+        \underbrace{\frac{\partial z^{(1)}}{\partial W^{(1)}}}_{a^{(0)}}
+    \]
+
+    \vspace{0.2cm}
+    \textbf{Intuition:}
+    \begin{itemize}
+        \item Start with the error at the output.
+        \item Multiply through each layer's local gradient.
+        \item Each layer ``receives'' how much it contributed to the error.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Training Loop}
+    \textbf{Standard training procedure:}
+    \begin{enumerate}
+        \item \textbf{Initialise} weights randomly (small values).
+        \item For each \emph{epoch} (pass over training data):
+        \begin{enumerate}
+            \item \textbf{Forward:} Compute $\hat{y}$ and loss $L$.
+            \item \textbf{Backward:} Compute all gradients via backprop.
+            \item \textbf{Update:} $W \gets W - \alpha\,\nabla_W L$.
+        \end{enumerate}
+        \item Monitor loss on a \emph{validation set}; stop when it no longer improves.
+    \end{enumerate}
+
+    \vspace{0.2cm}
+    \textbf{Key hyperparameters:}
+    \begin{itemize}
+        \item Learning rate $\alpha$: too large $\to$ diverge; too small $\to$ slow.
+        \item Number of layers and units per layer.
+        \item Batch size (how many examples per update).
+        \item Regularisation strength.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Overfitting and Generalisation}
+    \textbf{Overfitting:} The model memorises training data and performs poorly on new data.
+
+    \vspace{0.2cm}
+    \textbf{Signs:} Training loss decreases, but validation loss increases.
+
+    \vspace{0.2cm}
+    \textbf{Common remedies:}
+    \begin{itemize}
+        \item \textbf{More data:} Usually the most effective fix.
+        \item \textbf{Dropout:} Randomly zero out units during training (forces redundancy).
+        \item \textbf{L2 regularisation:} Penalise large weights: $L_{\text{reg}} = L + \lambda \|W\|^2$.
+        \item \textbf{Early stopping:} Stop training when validation loss stops improving.
+        \item \textbf{Batch normalisation:} Normalise layer inputs; stabilises training.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Strengths and Challenges}
+    \textbf{Strengths:}
+    \begin{itemize}
+        \item \textbf{Universal approximation:} A network with one hidden layer can approximate any continuous function (given enough units).
+        \item Learn complex non-linear patterns automatically.
+        \item End-to-end learning: raw input to prediction without hand-crafted features.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Challenges:}
+    \begin{itemize}
+        \item \textbf{Local minima \& saddle points:} Gradient descent is not guaranteed to find the global optimum.
+        \item \textbf{Vanishing/exploding gradients:} Gradients can shrink or grow exponentially in deep nets.
+        \item \textbf{Interpretability:} Hard to explain individual decisions (black box).
+        \item \textbf{Data and compute:} Large networks need large datasets and significant compute.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+    \textbf{What we covered:}
+    \begin{itemize}
+        \item Biological inspiration: neurons, synapses, and learning as weight adjustment.
+        \item Perceptron: linear classifier, learning rule, XOR limitation.
+        \item Multilayer networks: hidden layers, activation functions, forward pass.
+        \item Backpropagation: chain rule, efficient gradient computation, training loop.
+        \item Practical concerns: overfitting, regularisation, hyperparameter tuning.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Key takeaway:} Neural networks learn by adjusting millions of weights to minimise a loss function --- backpropagation makes this tractable.
+
+    \vspace{0.2cm}
+    \textbf{Further study:}
+    \begin{itemize}
+        \item Convolutional Neural Networks (CNNs) for images.
+        \item Recurrent Neural Networks (RNNs) for sequences.
+        \item Transformers and attention mechanisms for NLP.
+    \end{itemize}
+\end{frame}
+
+\end{document}
