@@ -22,18 +22,25 @@
 \end{center}
 
 \section{Objectives}
-The goal of this assignment is to apply the formal frameworks from \textit{Russell \& Norvig (Chapter 2)} to a real-world problem. You will demonstrate your ability to specify success metrics and classify the complexity of an AI's operational environment.
+The goal of this assignment is to apply the formal frameworks from \textit{Russell \& Norvig (Chapter 2)} to a real-world problem. You will demonstrate your ability to specify success metrics, classify the complexity of an AI's operational environment, and represent AI system information in a structured data format.
 
 \section{Task Description}
-Select \textbf{one} of the following modern AI applications (or propose one for approval):
+Select \textbf{one} of the following modern AI applications:
 \begin{itemize}[noitemsep]
     \item \textbf{A:} An Automated Warehouse Sorting Robot (e.g., Amazon Robotics).
     \item \textbf{B:} A Personalized News Feed Recommender (e.g., Twitter/X or TikTok algorithm).
     \item \textbf{C:} An Agricultural Monitoring Drone for crop disease detection.
+    \item \textbf{D:} A Medical Imaging Assistant for early disease detection (e.g., X-ray triage).
+    \item \textbf{E:} A Smart Traffic Signal Controller for reducing congestion in cities.
+    \item \textbf{F:} A Voice-Based Virtual Assistant for multilingual customer support.
+    \item \textbf{G:} A Fraud Detection System for digital payments and banking transactions.
+    \item \textbf{H:} An AI Tutor for personalized student learning recommendations.
+    \item \textbf{I:} A Predictive Maintenance System for factory machines and equipment.
+    \item \textbf{J:} A Disaster Response Drone for search, mapping, and emergency support.
 \end{itemize}
 
 \vspace{0.3cm}
-\noindent For your chosen system, complete the following three tasks:
+\noindent For your chosen system, complete the following four tasks:
 
 \section{Task 1: PEAS Specification}
 Define the \textbf{PEAS} framework for your agent. Ensure your descriptions are specific (e.g., do not just say "Cameras," specify "High-resolution RGB and Infrared sensors").
@@ -63,10 +70,54 @@ Answer the following questions in short-paragraph format:
     \item Propose one \textbf{Utility Function} that would help the agent handle a trade-off (e.g., Speed vs. Safety). How would the agent's behavior change if the weight of this utility was doubled?
 \end{enumerate}
 
+\section{Task 4: Structured Data Design (JSON Practice)}
+Represent your Task 1 and Task 2 outputs in a single valid \textbf{JSON} object. This task is for practicing structured data storage and machine-readable AI specifications.
+
+\vspace{0.2cm}
+\textbf{Requirements:}
+\begin{itemize}
+        \item Include top-level keys: \texttt{system\_name}, \texttt{peas}, \texttt{environment\_classification}, \texttt{utility\_function}.
+        \item Under \texttt{peas}, include: \texttt{performance\_measures}, \texttt{environment}, \texttt{actuators}, \texttt{sensors}.
+        \item Store \texttt{performance\_measures} as an array with at least 4 items.
+        \item Store each environment dimension as a nested object with fields \texttt{choice} and \texttt{justification}.
+        \item Ensure your JSON is syntactically valid (proper quotes, commas, and brackets).
+\end{itemize}
+
+\vspace{0.15cm}
+\textbf{Suggested JSON template (adapt with your own content):}
+\begin{verbatim}
+{
+    "system_name": "Agricultural Monitoring Drone",
+    "peas": {
+        "performance_measures": [
+            "disease_detection_accuracy",
+            "false_alarm_rate",
+            "coverage_per_hour",
+            "battery_efficiency"
+        ],
+        "environment": "Large open farmland with variable weather",
+        "actuators": ["flight_controller", "sprayer"],
+        "sensors": ["RGB_camera", "infrared_camera", "GPS"]
+    },
+    "environment_classification": {
+        "observability": {
+            "choice": "Partially Observable",
+            "justification": "Occlusion and weather hide some crop regions"
+        },
+        "agents": {
+            "choice": "Single-agent",
+            "justification": "Only one primary decision-making drone"
+        }
+    },
+    "utility_function": "U = 0.6*accuracy - 0.4*energy_cost"
+}
+\end{verbatim}
+
 \section{Submission Guidelines}
 \begin{itemize}
     \item Submit your response as a single \textbf{PDF} file via email.
-    \item Format: 12pt font, maximum 2 pages.
+    \item Include your JSON output in a separate section titled \textbf{Structured Representation}.
+    \item Format: 12pt font, maximum 3 pages.
     \item Academic Integrity: All justifications must be your own. Use of AI for formatting is allowed, but the design logic must be original.
 \end{itemize}
 

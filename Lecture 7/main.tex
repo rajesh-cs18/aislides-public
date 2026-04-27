@@ -1,0 +1,406 @@
+\documentclass[10pt]{beamer}
+
+% --- Modern Theme ---
+\usetheme{metropolis}
+\usecolortheme{default}
+\setbeamercolor{background canvas}{bg=white}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[scale=2]{ccicons}
+\usepackage{pgfplots}
+\usepgfplotslibrary{dateplot}
+\usepackage{xspace}
+
+% --- Title Information ---
+\title{Foundations of Artificial Intelligence}
+\subtitle{Part VII: Introduction to Robotics \& Computer Vision (Overview)}
+\institute{Department of Computer Science}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}{Lecture Roadmap}
+    \setbeamertemplate{section in toc}[sections numbered]
+    \tableofcontents[hideallsubsections]
+\end{frame}
+
+\begin{frame}{Learning Objectives}
+    By the end of this lecture, you should be able to:
+    \begin{itemize}
+        \item Explain how robotics combines perception, reasoning, and action.
+        \item Identify common sensors used by intelligent robots and autonomous systems.
+        \item Describe the basic idea of image classification in computer vision.
+        \item Discuss how AI enables autonomy in self-driving and other robotic platforms.
+        \item Recognize practical limitations: uncertainty, safety, and real-time constraints.
+    \end{itemize}
+\end{frame}
+
+\section{Robotics and Vision Overview}
+
+\begin{frame}{What Is Robotics in AI?}
+    \textbf{Robotics:} Building agents that sense, reason, and act in the physical world.
+
+    \vspace{0.2cm}
+    Core components:
+    \begin{itemize}
+        \item \textbf{Perception:} Understand environment from sensors.
+        \item \textbf{Decision-making:} Plan and choose actions.
+        \item \textbf{Control:} Execute actions through motors/actuators.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Computer Vision} is a key part of robotic perception:
+    \begin{itemize}
+        \item Detect lanes, objects, humans, obstacles.
+        \item Estimate scene structure and motion.
+        \item Support safe navigation and interaction.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Why Robotics + Computer Vision Matters}
+    Real systems where AI and CV are essential:
+    \begin{itemize}
+        \item Autonomous driving and driver-assistance.
+        \item Warehouse and logistics robots.
+        \item Surgical and assistive medical robots.
+        \item Drones for mapping, inspection, and delivery.
+        \item Smart manufacturing and quality control.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{High-level loop:}
+    \[
+      \text{Sense} \rightarrow \text{Understand} \rightarrow \text{Plan} \rightarrow \text{Act} \rightarrow \text{Repeat}
+    \]
+\end{frame}
+
+\begin{frame}{A Canonical Robotics Pipeline}
+    \small
+    \setlength{\tabcolsep}{8pt}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{7.2cm}}
+        \toprule
+        \textbf{Stage} & \textbf{Typical Tasks} \\
+        \midrule
+        Sensing & Capture data using camera, LiDAR, radar, IMU, GPS, ultrasound. \\
+        Perception & Object detection, localization, scene understanding, tracking. \\
+        Mapping & Build map or occupancy grid from observations. \\
+        Planning & Path planning and behavior selection under constraints. \\
+        Control & Convert plans into steering, velocity, and actuator commands. \\
+        Feedback & Re-evaluate after each action to handle uncertainty. \\
+        \bottomrule
+    \end{tabular}
+\end{frame}
+
+\section{Perception}
+
+\begin{frame}{Perception: From Raw Data to Meaning}
+    \textbf{Perception} transforms sensor signals into useful world models.
+
+    \vspace{0.2cm}
+    Typical outputs:
+    \begin{itemize}
+        \item \textbf{Detection:} What objects are present?
+        \item \textbf{Localization:} Where are they?
+        \item \textbf{Classification:} What category does each object belong to?
+        \item \textbf{Tracking:} How are objects moving over time?
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Challenge:} Real-world data is noisy, incomplete, and ambiguous.
+\end{frame}
+
+\begin{frame}{Levels of Visual Perception}
+    \begin{itemize}
+        \item \textbf{Low-level vision:} edges, corners, gradients, keypoints.
+        \item \textbf{Mid-level vision:} regions, contours, depth cues, motion cues.
+        \item \textbf{High-level vision:} object categories, scene semantics, intent.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    Classical examples:
+    \begin{itemize}
+        \item Stereo vision: estimate depth from disparity.
+        \item Optical flow: estimate motion from frame-to-frame changes.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    Modern systems combine classical geometry with learned models.
+\end{frame}
+
+\begin{frame}{Perception Under Uncertainty}
+    Why uncertainty appears:
+    \begin{itemize}
+        \item Sensor noise and calibration errors.
+        \item Occlusion (objects partially hidden).
+        \item Changing illumination and weather.
+        \item Dynamic scenes with many moving agents.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    Common strategies:
+    \begin{itemize}
+        \item Probabilistic filtering (e.g., Kalman-like updates).
+        \item Multi-sensor fusion for robustness.
+        \item Temporal smoothing and confidence estimates.
+    \end{itemize}
+\end{frame}
+
+\section{Sensors}
+
+\begin{frame}{Sensors in Intelligent Robots}
+    \textbf{Sensors} provide observations used for state estimation and planning.
+
+    \vspace{0.2cm}
+    Key categories:
+    \begin{itemize}
+        \item \textbf{Vision:} RGB/mono/stereo cameras.
+        \item \textbf{Range:} LiDAR, sonar, infrared depth sensors.
+        \item \textbf{Motion:} IMU (accelerometer + gyroscope), wheel encoders.
+        \item \textbf{Global position:} GPS/GNSS.
+        \item \textbf{Active safety sensing:} radar for distance and velocity.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Sensor Trade-offs}
+    \small
+    \setlength{\tabcolsep}{7pt}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabularx}{\textwidth}{l l X}
+        \toprule
+        \textbf{Sensor} & \textbf{Strength} & \textbf{Limitation} \\
+        \midrule
+        Camera & Rich semantic detail, low cost & Sensitive to lighting and weather \\
+        LiDAR & Accurate 3D distance measurements & Expensive, lower semantic detail \\
+        Radar & Works in fog/rain, good velocity estimation & Lower spatial resolution \\
+        IMU & Fast motion updates & Drift over long duration \\
+        GPS & Global localization outdoors & Weak/absent indoors or urban canyons \\
+        \bottomrule
+    \end{tabularx}
+
+    \vspace{0.2cm}
+    \textbf{Takeaway:} No single sensor is enough; practical systems fuse multiple sensors.
+\end{frame}
+
+\begin{frame}{Sensor Fusion (Basic Idea)}
+    \textbf{Goal:} Combine complementary sensor information to improve reliability.
+
+    \vspace{0.2cm}
+    Example in autonomous driving:
+    \begin{itemize}
+        \item Camera: recognizes traffic signs and lane markings.
+        \item LiDAR: provides geometric obstacle boundaries.
+        \item Radar: estimates relative speed of nearby vehicles.
+        \item GPS + IMU: provides global position and smooth local motion estimate.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    Fusion often improves robustness when one modality fails.
+\end{frame}
+
+\section{Image Classification (Basic Idea)}
+
+\begin{frame}{What Is Image Classification?}
+    \textbf{Task:} Assign an image to one label from a predefined set.
+
+    \vspace{0.2cm}
+    Example classes: \{cat, dog, car, pedestrian, stop-sign\}.
+
+    \vspace{0.2cm}
+    Pipeline (simplified):
+    \begin{enumerate}
+        \item Collect labeled images.
+        \item Preprocess (resize, normalize, augment).
+        \item Train model to map pixels $\to$ class probabilities.
+        \item Predict class with highest probability.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{From Features to Deep Learning}
+    \textbf{Classical approach:}
+    \begin{itemize}
+        \item Hand-crafted features (edges, texture descriptors).
+        \item Classifier (e.g., SVM, logistic regression).
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Modern approach: CNNs}
+    \begin{itemize}
+        \item Learn hierarchical features directly from data.
+        \item Early layers: edges and color blobs.
+        \item Deeper layers: parts and object-level concepts.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Why CNNs work well:} local receptive fields + shared weights + translation tolerance.
+\end{frame}
+
+\begin{frame}{Classification Output and Decision}
+    For image $x$, model outputs class probabilities:
+    \[
+      p(y=k\mid x), \quad k=1,\dots,K
+    \]
+
+    \vspace{0.2cm}
+    Predicted label:
+    \[
+      \hat{y} = \arg\max_k p(y=k\mid x)
+    \]
+
+    \vspace{0.2cm}
+    \textbf{Confidence matters:}
+    \begin{itemize}
+        \item High confidence: model is certain.
+        \item Low confidence: defer to human or safer fallback policy.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    In safety-critical systems, decision policies include uncertainty thresholds.
+\end{frame}
+
+\begin{frame}{Beyond Classification}
+    In robotics, classification alone is not enough.
+
+    \vspace{0.2cm}
+    Additional vision tasks:
+    \begin{itemize}
+        \item \textbf{Object detection:} classify + localize with bounding boxes.
+        \item \textbf{Semantic segmentation:} classify each pixel.
+        \item \textbf{Depth estimation:} infer distance from images.
+        \item \textbf{Pose estimation:} infer orientation and key points.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    These tasks support navigation, manipulation, and human-robot interaction.
+\end{frame}
+
+\section{AI in Autonomous Systems}
+
+\begin{frame}{AI Stack in Autonomous Systems}
+    A practical autonomy stack often includes:
+    \begin{itemize}
+        \item \textbf{Perception models:} detect lanes, vehicles, pedestrians.
+        \item \textbf{Prediction models:} forecast other agents' motion.
+        \item \textbf{Planning models:} choose safe and efficient trajectories.
+        \item \textbf{Control algorithms:} track trajectory under dynamics constraints.
+        \item \textbf{Monitoring/safety layer:} override unsafe actions.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    System-level reliability matters more than any single model's accuracy.
+\end{frame}
+
+\begin{frame}{Example: Autonomous Driving Loop}
+    \small
+    \setlength{\tabcolsep}{7pt}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{7.2cm}}
+        \toprule
+        \textbf{Step} & \textbf{Typical Function} \\
+        \midrule
+        Perceive & Detect lanes, signs, drivable area, and dynamic obstacles. \\
+        Localize & Estimate ego pose relative to map and road geometry. \\
+        Predict & Estimate trajectories of nearby vehicles and pedestrians. \\
+        Plan & Select route and short-horizon safe maneuver. \\
+        Control & Convert to steering, throttle, and braking commands. \\
+        Verify & Apply safety checks and fail-safe fallback if needed. \\
+        \bottomrule
+    \end{tabular}
+\end{frame}
+
+\begin{frame}{Case Insight from Core AI Texts}
+    Introductory AI texts discuss robotic vehicles as complete AI agents:
+    \begin{itemize}
+        \item Driverless platforms combine \textbf{cameras, radar, and LiDAR}.
+        \item Perception and planning operate continuously in closed loop.
+        \item Sensor design strongly influences what can be perceived and controlled.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    This supports a key principle:
+    \begin{quote}
+        \small Better autonomy comes from strong integration of sensors, perception, planning, and control.
+    \end{quote}
+\end{frame}
+
+\begin{frame}{Challenges in Real Deployment}
+    \textbf{Technical challenges:}
+    \begin{itemize}
+        \item Long-tail edge cases are hard to cover in training data.
+        \item Domain shift: weather, geography, and sensor aging.
+        \item Real-time compute constraints on embedded hardware.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Safety and ethics challenges:}
+    \begin{itemize}
+        \item Reliable uncertainty estimation and fallback behavior.
+        \item Bias and fairness in perception models.
+        \item Accountability and regulation in autonomous decision making.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Evaluation Metrics (Overview)}
+    Robotics and vision systems are evaluated at multiple levels:
+
+    \vspace{0.1cm}
+    \textbf{Perception:}
+    \begin{itemize}
+        \item Classification accuracy, precision, recall, F1.
+        \item Detection mAP (mean Average Precision).
+    \end{itemize}
+
+    \vspace{0.1cm}
+    \textbf{Autonomy/system:}
+    \begin{itemize}
+        \item Collision rate and safety intervention count.
+        \item Lane-keeping and trajectory tracking error.
+        \item Mission success and average completion time.
+    \end{itemize}
+
+    \vspace{0.1cm}
+    \textit{The final objective is safe, robust behavior in real environments.}
+\end{frame}
+
+\begin{frame}{Summary and Next Steps}
+    \textbf{What we covered:}
+    \begin{itemize}
+        \item Robotics as a sense-think-act AI system.
+        \item Perception fundamentals and uncertainty.
+        \item Sensor types and the need for fusion.
+        \item Basic image classification and CNN intuition.
+        \item Role of AI in autonomous systems and deployment risks.
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \textbf{Key takeaway:} Robust autonomy requires both strong models and strong systems engineering.
+
+    \vspace{0.3cm}
+    \textit{Use the next slides for quick self-assessment and discussion.}
+\end{frame}
+
+\begin{frame}{Self-Assessment Questions I}
+    \begin{enumerate}
+        \item Describe the \textit{sense-think-act loop} and explain why all three components are essential in robotics.
+        \item Why is sensor fusion necessary? Give an example of how combining camera and LiDAR improves robustness.
+        \item A CNN trained on sunny outdoor images shows poor performance on rainy images. What problem is this, and how might you address it?
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Self-Assessment Questions II}
+    \begin{enumerate}
+        \setcounter{enumi}{3}
+        \item In autonomous driving, what trade-offs exist between classification confidence thresholds and system safety?
+        \item Name at least two real-world challenges (not in training) that make robust autonomous systems hard to deploy.
+    \end{enumerate}
+\end{frame}
+
+\end{document}
